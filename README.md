@@ -1,9 +1,9 @@
 # Istio on Kubernetes Engine and Compute Engine
 
 * [Introduction](#introduction)
-      * [Architecture](#architecture)
-            * [Application architecture](#application-architecture)
-            * [Infrastructure architecture](#infrastructure-architecture)
+* [Architecture](#architecture)
+  * [Application architecture](#application-architecture)
+  * [Infrastructure architecture](#infrastructure-architecture)
 * [Prerequisites](#prerequisites)
   * [Tools](#tools)
 * [Creating a project](#creating-a-project)
@@ -36,7 +36,7 @@ VPN. The feature allows for a non-Kubernetes service running outside of the
 Istio infrastructure on Kubernetes Engine to be integrated into and managed by
 the Istio service mesh.
 
-#### Architecture
+## Architecture
 
 This demonstration will create a number of resources.
 
@@ -52,11 +52,11 @@ This demonstration will create a number of resources.
 * A firewall rule allowing full access to the MySQL database from the GKE
   cluster
 
-###### Application architecture
+#### Application architecture
 
 ![](./images/bookinfo.png)
 
-###### Infrastructure architecture
+#### Infrastructure architecture
 
 ![](./images/istio-gke-gce-vpn.png)
 
