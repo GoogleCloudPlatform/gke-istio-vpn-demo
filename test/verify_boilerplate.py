@@ -53,7 +53,7 @@ def get_args():
     return parser.parse_args()
 
 
-def get_refs():
+def get_refs(ARGS):
     """Converts the directory of boilerplate files into a map keyed by file
     extension.
 
@@ -181,7 +181,7 @@ def normalize_files(files):
     return newfiles
 
 
-def get_files(extensions):
+def get_files(extensions, ARGS):
     """Generates a list of paths whose boilerplate should be verified.
 
     If a list of file names has been provided on the command line, it will be
@@ -251,7 +251,7 @@ def get_regexs():
     return regexs
 
 
-def main():
+def main(args):
     """Identifies and verifies files that should have the desired boilerplate.
 
     Retrieves the lists of files to be validated and tests each one in turn.
@@ -260,8 +260,8 @@ def main():
     exists with a non-zero status code.
     """
     regexs = get_regexs()
-    refs = get_refs()
-    filenames = get_files(refs.keys())
+    refs = get_refs(args)
+    filenames = get_files(refs.keys(), args)
     nonconforming_files = []
     for filename in filenames:
         if not has_valid_header(filename, refs, regexs):
@@ -270,10 +270,10 @@ def main():
         print('%d files have incorrect boilerplate headers:' % len(
             nonconforming_files))
         for filename in sorted(nonconforming_files):
-            print(os.path.relpath(filename, ARGS.rootdir))
+            print(os.path.relpath(filename, args.rootdir))
         sys.exit(1)
 
 
 if __name__ == "__main__":
     ARGS = get_args()
-    main()
+    main(ARGS)
