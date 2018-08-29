@@ -18,23 +18,10 @@ set -e
 
 source istio.env
 
-# Delete all created Istio and Kubernetes resources
-if [[ -d "./istio-${ISTIO_VERSION}" ]]; then
-  "./istio-${ISTIO_VERSION}/bin/istioctl" delete -f \
-    "./istio-${ISTIO_VERSION}/samples/bookinfo/routing/route-rule-all-v1.yaml"
-  "./istio-${ISTIO_VERSION}/bin/istioctl" delete -f \
-    "./istio-${ISTIO_VERSION}/samples/bookinfo/routing/bookinfo-gateway.yaml"
-  kubectl delete -f <("./istio-${ISTIO_VERSION}/bin/istioctl" kube-inject -f \
-    "./istio-${ISTIO_VERSION}/samples/bookinfo/kube/bookinfo-ratings-v2-mysql-vm.yaml") \
-    --ignore-not-found="true"
-  kubectl delete -f <("./istio-${ISTIO_VERSION}/bin/istioctl" kube-inject -f \
-    "./istio-${ISTIO_VERSION}/samples/bookinfo/kube/bookinfo.yaml") \
-    --ignore-not-found="true"
-fi
-
-kubectl delete -f "./istio-${ISTIO_VERSION}/install/kubernetes/mesh-expansion.yaml" --ignore-not-found="true"
-kubectl delete -f "./istio-${ISTIO_VERSION}/install/kubernetes/istio-demo.yaml" --ignore-not-found="true"
-kubectl delete clusterrolebinding cluster-admin-binding --ignore-not-found="true"
+kubectl delete deploy,svc --all -n default
+kubectl delete deploy,svc --all -n istio-system
+kubectl delete deploy,svc --all -n vm
+kubectl delete svc dns-ilb -n kube-system
 
 # Finished deleting resources from GKE cluster
 
