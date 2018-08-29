@@ -145,8 +145,14 @@ pushd "istio-${ISTIO_VERSION}" || exit
 # Add the istioctl binary to the path
 export PATH="${PWD}/bin:${PATH}"
 
-# Install Istio into the cluster
-kubectl apply -f ./install/kubernetes/istio-demo.yaml
+# Install the Istio custom resource descriptors
+kubectl apply -f install/kubernetes/helm/istio/templates/crds.yaml
+
+# Install the Istio services
+kubectl apply -f install/kubernetes/istio-demo-auth.yaml
+
+# Add label to enable Envoy auto-injection
+kubectl label namespace default istio-injection=enabled
 
 # Install the ILBs necessary for mesh expansion
 kubectl apply -f ./install/kubernetes/mesh-expansion.yaml
@@ -158,9 +164,9 @@ export GCP_OPTS="--zone ${ZONE} --project ${ISTIO_PROJECT}"
 export SERVICE_NAMESPACE=vm
 ./install/tools/setupMeshEx.sh generateClusterEnv "${ISTIO_CLUSTER}"
 
-# Turn off the Istio auth to prevent auth issues
-if [[ "${ISTIO_AUTH_POLICY}" == "NONE" ]] ; then
-  sed -i'' -e "s/CONTROL_PLANE_AUTH_POLICY=MUTUAL_TLS/CONTROL_PLANE_AUTH_POLICY=${ISTIO_AUTH_POLICY}/g" cluster.env
+# Ensure that mTLS is enabled
+if [[ "${ISTIO_AUTH_POLICY}" == "MUTUAL_TLS" ]] ; then
+  sed -i'' -e "s/CONTROL_PLANE_AUTH_POLICY=NONE/CONTROL_PLANE_AUTH_POLICY=${ISTIO_AUTH_POLICY}/g" cluster.env
 fi
 
 # Generate the DNS configuration necessary to have the GCE VM join the mesh.
@@ -168,6 +174,9 @@ fi
 
 # Create the namespace to be used by the service on the VM.
 kubectl apply -f ../namespaces.yaml
+
+# Create the keys for mTLS
+./install/tools/setupMeshEx.sh machineCerts default vm all
 
 # Re-export the GCP_OPTS to switch the project to the project where the VM
 # resides
@@ -184,15 +193,14 @@ istioctl register -n vm mysqldb "$(gcloud compute instances describe "${GCE_VM}"
 # Install the bookinfo services and deployments and set up the initial Istio
 # routing. For more information on routing see this Istio blog post:
 # https://istio.io/blog/2018/v1alpha3-routing/
-kubectl apply -f <(istioctl kube-inject -f ./samples/bookinfo/kube/bookinfo.yaml)
-kubectl apply -f <(istioctl kube-inject -f ./samples/bookinfo/kube/bookinfo-ratings-v2-mysql-vm.yaml)
-istioctl create -f ./samples/bookinfo/routing/bookinfo-gateway.yaml
-istioctl create -f ./samples/bookinfo/routing/route-rule-all-v1.yaml
+kubectl apply -f ./samples/bookinfo/platform/kube/bookinfo.yaml
+kubectl apply -f ./samples/bookinfo/networking/bookinfo-gateway.yaml
+kubectl apply -f ./samples/bookinfo/networking/destination-rule-all-mtls.yaml
 
 # Change the routing to point to the most recent versions of the bookinfo
 # microservices
-istioctl replace -f ./samples/bookinfo/routing/route-rule-ratings-mysql-vm.yaml
-istioctl replace -f ./samples/bookinfo/routing/route-rule-reviews-v3.yaml
+kubectl apply -f ./samples/bookinfo/networking/virtual-service-reviews-v3.yaml
+kubectl apply -f ./samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-vm.yaml
 
 popd || exit
 
