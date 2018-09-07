@@ -16,7 +16,11 @@
 
 set -e
 
-source istio.env
+ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+# shellcheck source=scripts/istio.env
+source "$ROOT/scripts/istio.env"
+
+ISTIO_DIR="$ROOT/istio-${ISTIO_VERSION}"
 
 # Check if all required variables are non-null
 # Globals:
@@ -93,10 +97,10 @@ enable_project_api "${ISTIO_PROJECT}" container.googleapis.com
 enable_project_api "${GCE_PROJECT}" compute.googleapis.com
 
 # Setup Terraform
-terraform init
+(cd "$ROOT/terraform"; terraform init -input=false)
 
 # Deploy infrastructure using Terraform
-terraform apply -var "istio_project=${ISTIO_PROJECT}" \
+(cd "$ROOT/terraform"; terraform apply -var "istio_project=${ISTIO_PROJECT}" \
   -var "gce_project=${GCE_PROJECT}" \
   -var "istio_cluster=${ISTIO_CLUSTER}" \
   -var "zone=${ZONE}" \
@@ -109,23 +113,24 @@ terraform apply -var "istio_project=${ISTIO_PROJECT}" \
   -var "istio_subnet_cidr=${ISTIO_SUBNET_CIDR}" \
   -var "istio_subnet_cluster_cidr=${ISTIO_SUBNET_CLUSTER_CIDR}" \
   -var "istio_subnet_services_cidr=${ISTIO_SUBNET_SERVICES_CIDR}" \
-  -var "gce_vm=${GCE_VM}"
+  -var "gce_vm=${GCE_VM}" -input=false -auto-approve)
 
 # Check for required Istio components and download if necessary
-if [[ ! -d "$(pwd)/istio-${ISTIO_VERSION}" ]]; then
+if [[ ! -d "$ISTIO_DIR" ]]; then
   if [[ "$(uname -s)" == "Linux" ]]; then
     export OS_TYPE="linux"
   elif [[ "$(uname -s)" == "Darwin" ]]; then
     export OS_TYPE="osx"
   fi
 
-  curl -L --remote-name https://github.com/istio/istio/releases/download/$ISTIO_VERSION/istio-$ISTIO_VERSION-$OS_TYPE.tar.gz
+  (cd "$ROOT";
+    curl -L --remote-name https://github.com/istio/istio/releases/download/$ISTIO_VERSION/istio-$ISTIO_VERSION-$OS_TYPE.tar.gz
+    # extract istio
+    tar -xzf "$ROOT/istio-$ISTIO_VERSION-$OS_TYPE.tar.gz"
 
-  # extract istio
-  tar -xzf istio-$ISTIO_VERSION-$OS_TYPE.tar.gz
-
-  # remove istio zip
-  rm istio-$ISTIO_VERSION-$OS_TYPE.tar.gz
+    # remove istio zip
+    rm "$ROOT/istio-$ISTIO_VERSION-$OS_TYPE.tar.gz"
+  )
 fi
 
 # Setup kubectl with the credentials for the newly created cluster
@@ -138,76 +143,81 @@ if [[ ! "$(kubectl get clusterrolebinding --field-selector metadata.name=cluster
     --clusterrole=cluster-admin --user="$(gcloud config get-value core/account)"
 fi
 
-# The setupMeshEx.sh script requires that all calls made to it happen from the
-# root of the Istio directory so changing directory to it.
-pushd "istio-${ISTIO_VERSION}" || exit
-
-# Add the istioctl binary to the path
-export PATH="${PWD}/bin:${PATH}"
-
 # Install the Istio custom resource descriptors
-kubectl apply -f install/kubernetes/helm/istio/templates/crds.yaml
+kubectl apply -f "$ISTIO_DIR/install/kubernetes/helm/istio/templates/crds.yaml"
 
 # Install the Istio services
-kubectl apply -f install/kubernetes/istio-demo-auth.yaml
+kubectl apply -f "$ISTIO_DIR/install/kubernetes/istio-demo-auth.yaml"
 
 # Add label to enable Envoy auto-injection
-kubectl label namespace default istio-injection=enabled
+kubectl label namespace default istio-injection=enabled --overwrite=true
 
 # Install the ILBs necessary for mesh expansion
-kubectl apply -f ./install/kubernetes/mesh-expansion.yaml
+kubectl apply -f "$ISTIO_DIR/install/kubernetes/mesh-expansion.yaml"
 
 # Start of mesh expansion
 
 # Export variables that will be used by the setupMeshEx script
 export GCP_OPTS="--zone ${ZONE} --project ${ISTIO_PROJECT}"
 export SERVICE_NAMESPACE=vm
-./install/tools/setupMeshEx.sh generateClusterEnv "${ISTIO_CLUSTER}"
+(
+  cd "$ISTIO_DIR"
+  "$ISTIO_DIR/install/tools/setupMeshEx.sh" \
+    generateClusterEnv "${ISTIO_CLUSTER}"
+)
 
 # Ensure that mTLS is enabled
 if [[ "${ISTIO_AUTH_POLICY}" == "MUTUAL_TLS" ]] ; then
-  sed -i'' -e "s/CONTROL_PLANE_AUTH_POLICY=NONE/CONTROL_PLANE_AUTH_POLICY=${ISTIO_AUTH_POLICY}/g" cluster.env
+  sed -i'' -e "s/CONTROL_PLANE_AUTH_POLICY=NONE/CONTROL_PLANE_AUTH_POLICY=${ISTIO_AUTH_POLICY}/g" "$ISTIO_DIR/cluster.env"
 fi
 
 # Generate the DNS configuration necessary to have the GCE VM join the mesh.
-./install/tools/setupMeshEx.sh generateDnsmasq
+(
+  cd "$ISTIO_DIR"
+  "$ISTIO_DIR/install/tools/setupMeshEx.sh" generateDnsmasq
+)
 
 # Create the namespace to be used by the service on the VM.
-kubectl apply -f ../namespaces.yaml
+kubectl apply -f "$ROOT/scripts/namespaces.yaml"
 
 # Create the keys for mTLS
-./install/tools/setupMeshEx.sh machineCerts default vm all
+(
+  cd "$ISTIO_DIR"
+  "$ISTIO_DIR/install/tools/setupMeshEx.sh" machineCerts default vm all
+)
 
 # Re-export the GCP_OPTS to switch the project to the project where the VM
 # resides
 export GCP_OPTS="--zone ${ZONE} --project ${GCE_PROJECT}"
 # Setup the Istio service proxy and service on the GCE VM
-./install/tools/setupMeshEx.sh gceMachineSetup "${GCE_VM}"
+(
+  cd "$ISTIO_DIR"
+  "$ISTIO_DIR/install/tools/setupMeshEx.sh" gceMachineSetup "${GCE_VM}"
+)
 
 # Mesh expansion completed
 
 # Register the external service with the Istio mesh
-istioctl register -n vm mysqldb "$(gcloud compute instances describe "${GCE_VM}" \
+"$ISTIO_DIR/bin/istioctl" register -n vm mysqldb "$(gcloud compute instances describe "${GCE_VM}" \
   --format='value(networkInterfaces[].networkIP)' --project "${GCE_PROJECT}" --zone "${ZONE}")" 3306
 
 # Install the bookinfo services and deployments and set up the initial Istio
 # routing. For more information on routing see this Istio blog post:
 # https://istio.io/blog/2018/v1alpha3-routing/
-kubectl apply -f ./samples/bookinfo/platform/kube/bookinfo.yaml
-kubectl apply -f ./samples/bookinfo/networking/bookinfo-gateway.yaml
-kubectl apply -f ./samples/bookinfo/networking/destination-rule-all-mtls.yaml
+kubectl apply -f "$ISTIO_DIR/samples/bookinfo/platform/kube/bookinfo.yaml"
+kubectl apply -f "$ISTIO_DIR/samples/bookinfo/networking/bookinfo-gateway.yaml"
+kubectl apply -f "$ISTIO_DIR/samples/bookinfo/networking/destination-rule-all-mtls.yaml"
 
 # Change the routing to point to the most recent versions of the bookinfo
 # microservices
-kubectl apply -f ./samples/bookinfo/networking/virtual-service-reviews-v3.yaml
-kubectl apply -f ./samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-vm.yaml
-
-popd || exit
+kubectl apply -f "$ISTIO_DIR/samples/bookinfo/networking/virtual-service-reviews-v3.yaml"
+kubectl apply -f "$ISTIO_DIR/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-vm.yaml"
 
 # Install and deploy the database used by the Istio service
-gcloud compute ssh "${GCE_VM}" --project="${GCE_PROJECT}" \
-  --zone "${ZONE}" \
-  -- "$(cat setup-gce-vm.sh)"
+# shellcheck disable=SC2086
+gcloud compute ssh "${GCE_VM}" --project="${GCE_PROJECT}" --zone "${ZONE}" \
+  --command "$(cat $ROOT/scripts/setup-gce-vm.sh)"
+
 
 # Get the information about the gateway used by Istio to expose the BookInfo
 # application

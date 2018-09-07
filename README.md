@@ -193,7 +193,7 @@ as the source of the rating data.
 To tear down the resources created by this demo, run
 
 ```
-./tear-down.sh
+./teardown.sh
 ```
 
 You should be prompted by terraform about whether or not you want to tear down
