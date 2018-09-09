@@ -5,6 +5,8 @@
   * [Application architecture](#application-architecture)
   * [Infrastructure architecture](#infrastructure-architecture)
 * [Prerequisites](#prerequisites)
+  * [Run Demo in a Google Cloud Shell](#run-demo-in-a-google-cloud-shell)
+  * [Supported Operating Systems](#supported-operating-systems)
   * [Tools](#tools)
 * [Creating a project](#creating-a-project)
 * [Deployment](#deployment)
@@ -62,10 +64,33 @@ This demonstration will create a number of resources.
 
 ## Prerequisites
 
+A Google Cloud account and project is required for this.  Access to an existing Google Cloud
+project with the Kubernetes Engine service enabled If you do not have a Google Cloud account
+please signup for a free trial [here](https://cloud.google.com).
+
+### Run Demo in a Google Cloud Shell
+
+Click the button below to run the demo in a [Google Cloud Shell](https://cloud.google.com/shell/docs/).
+
+[![Open in Cloud Shell](http://gstatic.com/cloudssh/images/open-btn.svg)](https://console.cloud.google.com/cloudshell/open?git_repo=https%3A%2F%2Fgithub.com%2FGoogleCloudPlatform%2Fgke-istio-vpn-demo&page=editor&tutorial=README.md&image=gcr.io/graphite-cloud-shell-images/terraform)
+
+This Cloud Shell uses a custom container to install terraform, please select the 'Trust' radio button to
+start the custom container when the Cloud Shell starts.
+
+All the tools for the demo are installed. When your shell starts execute the following
+command in order to setup gcloud cli.
+
+```console
+gcloud init
+```
+
+### Supported Operating Systems
+
+This project will run on macOS, Linux, or in a [Google Cloud Shell](https://cloud.google.com/shell/docs/).
+
 ### Tools
 
-In order to use the code in this demo you will need to have have access to a
-bash-compatible shell with the following tools installed:
+The following tools are required. When using Cloud Shell the tools are already installed.
 
 * Two [GCP projects](https://console.cloud.google.com/) with billing enabled
 * [Google Cloud SDK (200.0.0 or later)](https://cloud.google.com/sdk/downloads)
