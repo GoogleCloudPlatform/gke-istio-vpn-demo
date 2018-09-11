@@ -147,7 +147,7 @@ fi
 kubectl apply -f "$ISTIO_DIR/install/kubernetes/helm/istio/templates/crds.yaml"
 
 # Install the Istio services
-kubectl apply -f "$ISTIO_DIR/install/kubernetes/istio-demo-auth.yaml"
+kubectl apply -n istio-system -f "$ISTIO_DIR/install/kubernetes/istio-demo-auth.yaml"
 
 # Add label to enable Envoy auto-injection
 kubectl label namespace default istio-injection=enabled --overwrite=true
@@ -204,14 +204,21 @@ export GCP_OPTS="--zone ${ZONE} --project ${GCE_PROJECT}"
 # Install the bookinfo services and deployments and set up the initial Istio
 # routing. For more information on routing see this Istio blog post:
 # https://istio.io/blog/2018/v1alpha3-routing/
-kubectl apply -f "$ISTIO_DIR/samples/bookinfo/platform/kube/bookinfo.yaml"
-kubectl apply -f "$ISTIO_DIR/samples/bookinfo/networking/bookinfo-gateway.yaml"
-kubectl apply -f "$ISTIO_DIR/samples/bookinfo/networking/destination-rule-all-mtls.yaml"
+kubectl apply -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/platform/kube/bookinfo.yaml"
+kubectl apply -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/networking/bookinfo-gateway.yaml"
+kubectl apply -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/networking/destination-rule-all-mtls.yaml"
 
 # Change the routing to point to the most recent versions of the bookinfo
 # microservices
-kubectl apply -f "$ISTIO_DIR/samples/bookinfo/networking/virtual-service-reviews-v3.yaml"
-kubectl apply -f "$ISTIO_DIR/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-vm.yaml"
+kubectl apply -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/networking/virtual-service-reviews-v3.yaml"
+kubectl apply -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/networking/virtual-service-ratings-mysql-vm.yaml"
+kubectl apply -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-vm.yaml"
 
 # Install and deploy the database used by the Istio service
 # shellcheck disable=SC2086
