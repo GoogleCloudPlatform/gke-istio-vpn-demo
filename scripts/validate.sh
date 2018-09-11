@@ -66,5 +66,6 @@ if ! diff --suppress-common-lines <(echo "${TWO_STAR}") <(echo "${FIVE_STAR}") \
 then
   exit 0
 else
+  echo "ERROR: DB change wasn't reflected in web UI"
   exit 1
 fi

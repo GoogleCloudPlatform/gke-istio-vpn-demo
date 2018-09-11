@@ -83,14 +83,15 @@ spec:
         container('k8s-node') {
           script {
             env.ZONE = "${ZONE}"
-            env.PROJECT_ID = "${PROJECT_ID}"
+            env.ISTIO_PROJECT = "${ISTIO_PROJECT}"
+            env.GCE_PROJECT = "${GCE_PROJECT}"
             env.REGION = "${REGION}"
             env.KEYFILE = GOOGLE_APPLICATION_CREDENTIALS
           }
           // Setup gcloud service account access
           sh "gcloud auth activate-service-account --key-file=${env.KEYFILE}"
           sh "gcloud config set compute/zone ${env.ZONE}"
-          sh "gcloud config set core/project ${env.PROJECT_ID}"
+          sh "gcloud config set core/project ${env.ISTIO_PROJECT}"
           sh "gcloud config set compute/region ${env.REGION}"
 
          }
