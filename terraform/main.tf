@@ -297,7 +297,7 @@ resource "google_container_cluster" "istio_cluster" {
   // Here we use gcloud to gather authentication information about our new cluster and write that
   // information to kubectls config file
   provisioner "local-exec" {
-    command = "gcloud container clusters get-credentials ${google_container_cluster.primary.name} --zone ${google_container_cluster.primary.zone} --project ${var.istio_project}"
+    command = "gcloud container clusters get-credentials ${google_container_cluster.istio_cluster.name} --zone ${google_container_cluster.istio_cluster.zone} --project ${var.istio_project}"
   }
 
 }
