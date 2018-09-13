@@ -70,6 +70,7 @@ spec:
 
 
   stages {
+    // Check config files and scripts for standards conformance
     stage('Lint') {
       steps {
         container('k8s-node') {
@@ -78,6 +79,7 @@ spec:
       }
     }
 
+    // Set gcloud context values so scripts can run
     stage('Setup') {
       steps {
         container('k8s-node') {
@@ -93,11 +95,11 @@ spec:
           sh "gcloud config set compute/zone ${env.ZONE}"
           sh "gcloud config set core/project ${env.ISTIO_PROJECT}"
           sh "gcloud config set compute/region ${env.REGION}"
-
          }
         }
     }
 
+    // Create infrastructure and deploy components
     stage('Create') {
       steps {
         container('k8s-node') {
@@ -106,6 +108,7 @@ spec:
       }
     }
 
+    // Verify that deployed application functions
     stage('Validate') {
       steps {
         container('k8s-node') {
@@ -115,6 +118,7 @@ spec:
     }
   }
 
+  // Always do teardown and revoke credentials after completing pipeline
   post {
     always {
       container('k8s-node') {
