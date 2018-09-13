@@ -60,6 +60,11 @@ enable_project_api() {
   gcloud services enable "${2}" --project "${1}"
 }
 
+# set to jenkins if there is no $USER
+USER=$(whoami)
+[[ "${USER}" == "root" ]] && export USER=jenkins
+echo "user is: $USER"
+
 # Provide the default values for the variables
 for VAR in "${ISTIO_CLUSTER}" "${ZONE}" "${REGION}" "${GCE_NETWORK}" \
            "${GCE_SUBNET}" "${GCE_SUBNET_CIDR}" "${ISTIO_NETWORK}" \
