@@ -57,7 +57,7 @@ INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway \
 # Get and store the currently served webpage
 FIVE_STAR="$(curl -s http://"${INGRESS_HOST}:${INGRESS_PORT}"/productpage)"
 
-# Update the MySQL database rating with a one star review to generate a diff
+# Update the MySQL database rating with a two star review to generate a diff
 # proving the MySQL on GCE database is being used by the application
 set_ratings 2
 

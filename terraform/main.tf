@@ -294,8 +294,8 @@ resource "google_container_cluster" "istio_cluster" {
     services_secondary_range_name = "${google_compute_subnetwork.subnet_istio.secondary_ip_range.1.range_name}"
   }
 
-  // Here we use gcloud to gather authentication information about our new cluster and write that
-  // information to kubectls config file
+  # Here we use gcloud to gather authentication information about our new cluster and write that
+  # information to kubectls config file
   provisioner "local-exec" {
     command = "gcloud container clusters get-credentials ${google_container_cluster.istio_cluster.name} --zone ${google_container_cluster.istio_cluster.zone} --project ${var.istio_project}"
   }

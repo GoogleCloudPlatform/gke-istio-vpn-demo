@@ -226,7 +226,7 @@ kubectl apply -n default \
   -f "$ISTIO_DIR/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-vm.yaml"
 
 # Install and deploy the database used by the Istio service
-# shellcheck disable=SC2086
+# shellcheck disable=SC2086 # Can't figure out quote escaping that works for command
 gcloud compute ssh "${GCE_VM}" --project="${GCE_PROJECT}" --zone "${ZONE}" \
   --command "$(cat $ROOT/scripts/setup-gce-vm.sh)"
 
