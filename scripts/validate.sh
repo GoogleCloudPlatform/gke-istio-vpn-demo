@@ -43,6 +43,11 @@ set_ratings() {
   return 1
 }
 
+# set to jenkins if there is no $USER
+USER=$(whoami)
+[[ "${USER}" == "root" ]] && export USER=jenkins
+echo "user is: $USER"
+
 # Get the IP address and port of the cluster's gateway to run tests against
 INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway \
   -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
