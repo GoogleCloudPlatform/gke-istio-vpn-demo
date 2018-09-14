@@ -43,6 +43,36 @@ set_ratings() {
   return 1
 }
 
+# Test that changes to db are reflected in web ui
+# Globals:
+#   None
+# Arguments:
+#   URL - application URL to test
+# Returns:
+#   None
+test_integration() {
+  # Get and store the currently served webpage
+  BEFORE="$(curl -s $1)"
+  # Update the MySQL database rating with a two star review to generate a diff
+  # proving the MySQL on GCE database is being used by the application
+  set_ratings 2
+
+  # Get the updated webpage with the updated ratings
+  AFTER="$(curl -s $1)"
+  # Check to make sure that changing the rating in the DB generated a diff in the
+  # webpage
+  if ! diff --suppress-common-lines <(echo "${AFTER}") <(echo "${BEFORE}") \
+    > /dev/null
+  then
+    echo "SUCCESS: Web UI reflects DB change"
+    return 0
+  else
+    echo "ERROR: DB change wasn't reflected in web UI:"
+    echo $(diff --suppress-common-lines <(echo "${AFTER}") <(echo "${BEFORE}"))
+    return 1
+  fi
+}
+
 # set to jenkins if there is no $USER
 USER=$(whoami)
 [[ "${USER}" == "root" ]] && export USER=jenkins
@@ -54,23 +84,14 @@ INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway \
 INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway \
   -o jsonpath='{.spec.ports[?(@.name=="http")].port}')
 
-# Get and store the currently served webpage
-FIVE_STAR="$(curl -s http://"${INGRESS_HOST}:${INGRESS_PORT}"/productpage)"
+APP_URL="http://${INGRESS_HOST}:${INGRESS_PORT}/productpage"
 
-# Update the MySQL database rating with a two star review to generate a diff
-# proving the MySQL on GCE database is being used by the application
-set_ratings 2
+for _ in {1..6}
+do
+  if test_integration $APP_URL; then
+    exit 0
+  fi
+  sleep 10
+done
 
-# Get the updated webpage with the updated ratings
-TWO_STAR="$(curl -s http://"${INGRESS_HOST}:${INGRESS_PORT}"/productpage)"
-
-# Check to make sure that changing the rating in the DB generated a diff in the
-# webpage
-if ! diff --suppress-common-lines <(echo "${TWO_STAR}") <(echo "${FIVE_STAR}") \
-  > /dev/null
-then
-  exit 0
-else
-  echo "ERROR: DB change wasn't reflected in web UI"
-  exit 1
-fi
+exit 1
