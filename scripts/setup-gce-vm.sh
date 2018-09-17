@@ -22,9 +22,12 @@ sudo apt-get update && sudo apt-get install --no-install-recommends -y mariadb-s
 
 # Give all privileges to all databases to the root user on localhost and then
 # reload the privilege grants
-sudo mysql -e "grant all privileges on *.* to 'root'@'localhost' identified by 'password'; flush privileges"
+sudo mysql \
+  -e "grant all privileges on *.* to 'root'@'localhost' identified by 'password'; flush privileges"
 
 # Grab the sample database data from GitHub and load it
+# Of course, it goes without saying that you should not use "password" as your
+# password in real life.
 curl https://raw.githubusercontent.com/istio/istio/master/samples/bookinfo/src/mysql/mysqldb-init.sql \
   | mysql -u root --password=password -h 127.0.0.1
 
