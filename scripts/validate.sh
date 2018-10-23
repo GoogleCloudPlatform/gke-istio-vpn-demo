@@ -33,7 +33,7 @@ source "$ROOT/scripts/istio.env"
 # Returns:
 #   None
 set_ratings() {
-  if [[ $1 =~ ^[1-5]$ ]]; then
+  if [[ $1 =~ ^[0-5]$ ]]; then
     COMMAND="mysql -u root --password=password test -e \"update ratings set rating=${1} where reviewid=1\""
     gcloud compute ssh "${GCE_VM}" --project "${GCE_PROJECT}" --zone "${ZONE}" --command "${COMMAND}"
     return 0
@@ -52,13 +52,13 @@ set_ratings() {
 #   None
 test_integration() {
   # Get and store the currently served webpage
-  BEFORE="$(curl -s $1)"
+  BEFORE="$(curl -s "$1")"
   # Update the MySQL database rating with a two star review to generate a diff
   # proving the MySQL on GCE database is being used by the application
-  set_ratings 2
+  set_ratings "$2"
 
   # Get the updated webpage with the updated ratings
-  AFTER="$(curl -s $1)"
+  AFTER="$(curl -s "$1")"
   # Check to make sure that changing the rating in the DB generated a diff in the
   # webpage
   if ! diff --suppress-common-lines <(echo "${AFTER}") <(echo "${BEFORE}") \
@@ -68,7 +68,7 @@ test_integration() {
     return 0
   else
     echo "ERROR: DB change wasn't reflected in web UI:"
-    echo $(diff --suppress-common-lines <(echo "${AFTER}") <(echo "${BEFORE}"))
+    diff --suppress-common-lines <(echo "${AFTER}") <(echo "${BEFORE}")
     return 1
   fi
 }
@@ -84,14 +84,24 @@ INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway \
 INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway \
   -o jsonpath='{.spec.ports[?(@.name=="http")].port}')
 
-APP_URL="http://${INGRESS_HOST}:${INGRESS_PORT}/productpage"
+## Check if port is set or not.
+if [ -z "$INGRESS_PORT" ]; then
+  GATEWAY_URL="${INGRESS_HOST}"
+else
+  GATEWAY_URL="${INGRESS_HOST}:${INGRESS_PORT}"
+fi
 
-for _ in {1..6}
+APP_URL="http://${GATEWAY_URL}/productpage"
+
+for x in {1..30}
 do
-  if test_integration $APP_URL; then
+  if [ $x == 30 ]; then
+    echo "We have exceeded attempts to validate service..."
+    exit 1
+  fi
+
+  if test_integration "$APP_URL" $(( x % 6 )); then
     exit 0
   fi
   sleep 10
 done
-
-exit 1
