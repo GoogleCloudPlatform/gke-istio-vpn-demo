@@ -226,9 +226,8 @@ kubectl apply -n default \
   -f "$ISTIO_DIR/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-vm.yaml"
 
 # Install and deploy the database used by the Istio service
-# shellcheck disable=SC2086 # Can't figure out quote escaping that works for command
 gcloud compute ssh "${GCE_VM}" --project="${GCE_PROJECT}" --zone "${ZONE}" \
-  --command "$(cat $ROOT/scripts/setup-gce-vm.sh)"
+  --command "$(cat "$ROOT"/scripts/setup-gce-vm.sh)"
 
 
 # Get the information about the gateway used by Istio to expose the BookInfo
@@ -237,6 +236,12 @@ INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o \
   jsonpath='{.status.loadBalancer.ingress[0].ip}')
 INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o \
   jsonpath='{.spec.ports[?(@.name=="http")].port}')
-GATEWAY_URL="${INGRESS_HOST}:${INGRESS_PORT}"
+
+# Check if port is set or not.
+if [ -z "$INGRESS_PORT" ]; then
+  GATEWAY_URL="${INGRESS_HOST}"
+else
+  GATEWAY_URL="${INGRESS_HOST}:${INGRESS_PORT}"
+fi
 
 echo "You can view the service at http://${GATEWAY_URL}/productpage"
