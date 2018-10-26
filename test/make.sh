@@ -71,7 +71,8 @@ function check_python() {
 # file ending in '.sh'
 function check_shell() {
   echo "Running shellcheck"
-  find . -name "*.sh" -exec shellcheck -x {} \;
+  find . -name "*.sh" -not -path "*/istio-1.0.1/*" \
+    -not -path "*/gke-istio-shared/*" -exec shellcheck -x {} \;
 }
 
 # This function makes sure that there is no trailing whitespace
