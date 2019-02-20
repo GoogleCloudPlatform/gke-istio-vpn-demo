@@ -56,3 +56,8 @@ variable "gce_subnet_cidr" {}
 
 // The name to use for the GCE instance
 variable "gce_vm" {}
+
+// The gke version to use for the istio cluster.  This version must correspond
+// with the istio version in "Supported Cluster Versions":
+// https://cloud.google.com/istio/docs/istio-on-gke/installing
+variable "gke_version" {}

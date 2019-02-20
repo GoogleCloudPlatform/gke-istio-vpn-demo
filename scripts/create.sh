@@ -70,7 +70,7 @@ for VAR in "${ISTIO_CLUSTER}" "${ZONE}" "${REGION}" "${GCE_NETWORK}" \
            "${GCE_SUBNET}" "${GCE_SUBNET_CIDR}" "${ISTIO_NETWORK}" \
            "${ISTIO_SUBNET}" "${ISTIO_SUBNET_CIDR}" \
            "${ISTIO_SUBNET_CLUSTER_CIDR}" "${ISTIO_SUBNET_SERVICES_CIDR}" \
-           "${GCE_VM}"; do
+           "${GCE_VM}" "${ISTIO_GKE_VERSION}" "${GKE_VERSION}"; do
   variable_is_set "${VAR}"
 done
 
@@ -118,7 +118,9 @@ enable_project_api "${GCE_PROJECT}" compute.googleapis.com
   -var "istio_subnet_cidr=${ISTIO_SUBNET_CIDR}" \
   -var "istio_subnet_cluster_cidr=${ISTIO_SUBNET_CLUSTER_CIDR}" \
   -var "istio_subnet_services_cidr=${ISTIO_SUBNET_SERVICES_CIDR}" \
-  -var "gce_vm=${GCE_VM}" -input=false -auto-approve)
+  -var "gce_vm=${GCE_VM}" \
+  -var "gke_version=${GKE_VERSION}" \
+  -input=false -auto-approve)
 
 # Check for required Istio components and download if necessary
 if [[ ! -d "$ISTIO_DIR" ]]; then
@@ -138,21 +140,17 @@ if [[ ! -d "$ISTIO_DIR" ]]; then
   )
 fi
 
-# Setup kubectl with the credentials for the newly created cluster
-gcloud container clusters get-credentials "${ISTIO_CLUSTER}" --zone "${ZONE}" \
-  --project "${ISTIO_PROJECT}"
-
 if [[ ! "$(kubectl get clusterrolebinding --field-selector metadata.name=cluster-admin-binding \
                                           -o jsonpath='{.items[*].metadata.name}')" ]]; then
   kubectl create clusterrolebinding cluster-admin-binding \
     --clusterrole=cluster-admin --user="$(gcloud config get-value core/account)"
 fi
 
-# Install the Istio custom resource descriptors
-kubectl apply -f "$ISTIO_DIR/install/kubernetes/helm/istio/templates/crds.yaml"
-
-# Install the Istio services
-kubectl apply -n istio-system -f "$ISTIO_DIR/install/kubernetes/istio-demo-auth.yaml"
+gcloud beta container clusters update "$ISTIO_CLUSTER" \
+    --update-addons=Istio=ENABLED \
+    --istio-config=auth=MTLS_STRICT \
+    --project "$ISTIO_PROJECT" \
+    --zone "$ZONE"
 
 # Add label to enable Envoy auto-injection
 kubectl label namespace default istio-injection=enabled --overwrite=true
