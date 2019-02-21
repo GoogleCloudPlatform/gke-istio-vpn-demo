@@ -65,7 +65,8 @@ done
   -var "istio_subnet_cidr=${ISTIO_SUBNET_CIDR}" \
   -var "istio_subnet_cluster_cidr=${ISTIO_SUBNET_CLUSTER_CIDR}" \
   -var "istio_subnet_services_cidr=${ISTIO_SUBNET_SERVICES_CIDR}" \
-  -var "gce_vm=${GCE_VM}")
+  -var "gce_vm=${GCE_VM}" \
+  -var "gke_version=${GKE_VERSION}")
 
 # Clean up the downloaded Istio components
 if [[ -d "$ROOT/istio-$ISTIO_VERSION" ]]; then
