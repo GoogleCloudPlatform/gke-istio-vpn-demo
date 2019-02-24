@@ -15,14 +15,19 @@
 # limitations under the License.
 
 set -e
+set -x
 
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 # shellcheck source=scripts/istio.env
 source "$ROOT/scripts/istio.env"
 
-kubectl delete deploy,svc --all -n default
-kubectl delete deploy,svc --all -n istio-system
-kubectl delete deploy,svc --all -n vm
+gcloud beta container clusters update "$ISTIO_CLUSTER" \
+    --update-addons=Istio=DISABLED \
+    --project "$ISTIO_PROJECT" \
+    --zone "$ZONE"
+
+kubectl delete ns vm --ignore-not-found=true
+kubectl delete ns bookinfo --ignore-not-found=true
 kubectl delete svc dns-ilb -n kube-system --ignore-not-found=true
 
 # Finished deleting resources from GKE cluster
@@ -51,7 +56,7 @@ until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list \
 done
 
 # Tear down all of the infrastructure created by Terraform
-(cd "$ROOT/terraform"; terraform destroy -input=false -auto-approve\
+(cd "$ROOT/terraform"; terraform init; terraform destroy -input=false -auto-approve\
   -var "istio_project=${ISTIO_PROJECT}" \
   -var "gce_project=${GCE_PROJECT}" \
   -var "istio_cluster=${ISTIO_CLUSTER}" \
@@ -65,6 +70,7 @@ done
   -var "istio_subnet_cidr=${ISTIO_SUBNET_CIDR}" \
   -var "istio_subnet_cluster_cidr=${ISTIO_SUBNET_CLUSTER_CIDR}" \
   -var "istio_subnet_services_cidr=${ISTIO_SUBNET_SERVICES_CIDR}" \
+  -var "gke_version=${GKE_VERSION}" \
   -var "gce_vm=${GCE_VM}")
 
 # Clean up the downloaded Istio components

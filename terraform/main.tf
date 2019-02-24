@@ -266,12 +266,6 @@ resource "google_compute_firewall" "allow_mysql" {
   }
 }
 
-# Gets the current version of Kubernetes engine
-data "google_container_engine_versions" "istio_cluster" {
-  zone    = "${var.zone}"
-  project = "${var.istio_project}"
-}
-
 # Creates a GKE cluster to be used in the demo
 resource "google_container_cluster" "istio_cluster" {
   name               = "${var.istio_cluster}"
@@ -279,9 +273,9 @@ resource "google_container_cluster" "istio_cluster" {
   project            = "${var.istio_project}"
   network            = "${google_compute_network.istio.self_link}"
   subnetwork         = "${google_compute_subnetwork.subnet_istio.self_link}"
-  min_master_version = "${data.google_container_engine_versions.istio_cluster.latest_master_version}"
+  min_master_version = "${var.gke_version}"
 
-  initial_node_count = "3"
+  initial_node_count = "4"
 
   // We specify the type of node to use.
   node_config {
