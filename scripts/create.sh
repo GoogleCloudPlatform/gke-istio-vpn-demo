@@ -15,6 +15,7 @@
 # limitations under the License.
 
 set -e
+set -x
 
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 # shellcheck source=scripts/istio.env
@@ -154,6 +155,9 @@ gcloud beta container clusters update "$ISTIO_CLUSTER" \
 
 # Add label to enable Envoy auto-injection
 kubectl label namespace default istio-injection=enabled --overwrite=true
+
+# wait for istio-system to be created
+until [ $(kubectl get ns  | grep -c  istio-system) -eq "1" ]; do echo 'waiting for ns istio-system to be created'; sleep 1; done
 
 # Install the ILBs necessary for mesh expansion
 kubectl apply -f "$ISTIO_DIR/install/kubernetes/mesh-expansion.yaml"
