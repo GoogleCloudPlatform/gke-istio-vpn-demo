@@ -17,24 +17,11 @@
 
 ## Introduction
 
-[Istio](https://istio.io/) is part of a new category of products known as "service mesh" software
-designed to manage the complexity of service resilience in a microservice
-infrastructure. It defines itself as a service management framework built to
-keep business logic separate from the logic to keep your services up and
-running. In other words, it provides a layer on top of the network that will
-automatically route traffic to the appropriate services, handle [circuit
-breaker](https://en.wikipedia.org/wiki/Circuit_breaker_design_pattern) logic,
-enforce access and load balancing policies, and generate telemetry data to
-gain insight into the network and allow for quick diagnosis of issues.
+[Istio](https://istio.io/) is part of a new category of products known as "service mesh" that can help manage some of the complexities associated with running infrastructure for microservices. The term service mesh is used to describe the network of microservices and other applications in your stack. A service mesh can help unify the interactions amongst your services and is designed to run both on-premise and in the cloud and is useful for services that are deployed both to VMs and Kubernetes. Some of the features that service mesh technologies such as Istio provide are service discovery and routing, enforcing access and load balancing policies, encrypting traffic, and observability.
 
-For more information on Istio, please refer to the [Istio
-documentation](https://istio.io/docs/).
+Istio is a service management framework that is designed to pull this type of logic outside of the business logic and into a separate layer so that the application developer can focus on application development and not network infrastructure. For more information on Istio, please refer to the [Istio documentation](https://istio.io/docs/).
 
-This repository contains demonstration code for Istio's mesh expansion feature
-between resources in two Google Cloud Platform (GCP) projects connected via
-VPN. The feature allows for a non-Kubernetes service running outside of the
-Istio infrastructure on Kubernetes Engine to be integrated into and managed by
-the Istio service mesh.
+This repository contains demonstration code for Istio's mesh expansion feature. Mesh expansion is used to integrate resources hosted outside of a Kubernetes cluster with the service mesh running inside of it. In this example, we will demonstrate how to expand the service mesh using two Google Cloud Platform (GCP) projects connected via VPN.
 
 ## Architecture
 
@@ -198,6 +185,12 @@ This will destroy all the resources created by Terraform including everything de
 
 ## Troubleshooting
 
+**Problem:** Functions in gke-istio-shared are not available: `gke-istio-shared/verify-functions.sh`
+
+**Solution:** If you are running this manually, you may be missing your git submodule. To fix this, run:
+`git submodule update --init`
+
+----
 **Problem:** The Book Reviews section is returning an error stating that the ratings service is not available.
 
 **Solution:** Istio may still be configuring the mesh. Wait for a minute so while refreshing the page.
