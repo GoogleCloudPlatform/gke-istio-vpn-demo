@@ -1,19 +1,26 @@
 # Istio on Kubernetes Engine and Compute Engine
 
-* [Introduction](#introduction)
-* [Architecture](#architecture)
-  * [Application architecture](#application-architecture)
-  * [Infrastructure architecture](#infrastructure-architecture)
-* [Prerequisites](#prerequisites)
-  * [Tools](#tools)
-* [Creating a project](#creating-a-project)
-* [Deployment](#deployment)
-  * [Noteworthy Aspects of the Deployment:](#noteworthy-aspects-of-the-deployment)
-* [Validation](#validation)
-* [Tear Down](#tear-down)
-* [Known issues](#known-issues)
-* [Troubleshooting](#troubleshooting)
-* [Relevant Material](#relevant-material)
+## Table of Contents
+<!--toc-->
+  * [Introduction](#introduction)
+     * [Istio on GKE](#istio-on-gke)
+  * [Architecture](#architecture)
+     * [Application architecture](#application-architecture)
+     * [Infrastructure architecture](#infrastructure-architecture)
+  * [Prerequisites](#prerequisites)
+     * [Run Demo in a Google Cloud Shell](#run-demo-in-a-google-cloud-shell)
+     * [Tools](#tools)
+        * [Install Cloud SDK](#install-cloud-sdk)
+        * [Install kubectl CLI](#install-kubectl-cli)
+        * [Install Terraform](#install-terraform)
+  * [Creating a project](#creating-a-project)
+  * [Deployment](#deployment)
+     * [Noteworthy Aspects of the Deployment:](#noteworthy-aspects-of-the-deployment)
+  * [Validation](#validation)
+  * [Tear Down](#tear-down)
+  * [Troubleshooting](#troubleshooting)
+  * [Relevant Material](#relevant-material)
+<!--toc-->
 
 ## Introduction
 
@@ -27,8 +34,30 @@ breaker](https://en.wikipedia.org/wiki/Circuit_breaker_design_pattern) logic,
 enforce access and load balancing policies, and generate telemetry data to
 gain insight into the network and allow for quick diagnosis of issues.
 
+Istio makes it easy to create a network of deployed services with load balancing, service-to-service authentication and monitoring without any changes in service code.
+
+Core features of Istio include:
+
+1. [Traffic management](https://istio.io/docs/concepts/traffic-management/) - Istio simplifies configuration of service-level properties like circuit breakers, timeouts, and retries making the network more robust.
+2. [Security](https://istio.io/docs/concepts/security/) - Istio, using with Kubernetes (or infrastructure) network policies, provides the ability to secure pod-to-pod or service-to-service communication at the network and application layers.
+3. Platform support - Istio is platform-independent and currently supports service deployment on Kubernetes, services registered with Consul and services running on individual virtual machines.
+5. Integration and customization - Istio, has a policy enforcement component which can be extended and customized to integrate with existing solutions for ACLs, logging, monitoring, quotas and auditing.
+
 For more information on Istio, please refer to the [Istio
 documentation](https://istio.io/docs/).
+
+### Istio on GKE
+
+When you create or update the cluster with Istio on GKE, following components are installed:
+
+1. Pilot, which is responsible for service discovery and for configuring the Envoy sidecar proxies in an Istio service mesh.
+2. [Istio-Policy and Istio-Telemetry](https://istio.io/docs/concepts/policies-and-telemetry), which enforce usage policies and gather telemetry data.
+3. The [Istio Ingress gateway](https://istio.io/docs/tasks/traffic-management/ingress), which provides an ingress point for traffic from outside the cluster.
+4. The [Istio Egress gateway](https://istio.io/docs/tasks/traffic-management/egress), which allow Istio features like monitoring and routing rules to be applied to traffic exiting the mesh.
+5. [Citadel](https://istio.io/docs/concepts/security), which automates key and certificate management for Istio.
+6. [Galley](https://istio.io/docs/concepts/what-is-istio/#galley), which provides configuration management services for Istio.
+
+For more information on how to install Istio, please refer to the [Installing Istio on GKE](https://cloud.google.com/istio/docs/istio-on-gke/installing).
 
 This repository contains demonstration code for Istio's mesh expansion feature
 between resources in two Google Cloud Platform (GCP) projects connected via
@@ -52,11 +81,11 @@ This demonstration will create a number of resources.
 * A firewall rule allowing full access to the MySQL database from the GKE
   cluster
 
-#### Application architecture
+### Application architecture
 
 ![](./images/bookinfo.png)
 
-#### Infrastructure architecture
+### Infrastructure architecture
 
 ![](./images/istio-gke-gce-vpn.png)
 
@@ -127,10 +156,24 @@ If necessary, repeat for a second project.
 
 ## Deployment
 
-[Clone the repository](https://guides.github.com/introduction/git-handbook/) and change directory to the `gke-istio-vpn-demo`
-directory.
+Use `git` to clone this project to your local machine:
+
+```shell
+git clone --recursive https://github.com/GoogleCloudPlatform/gke-istio-vpn-demo
+```
+
+Note that the `--recursive` argument is required to download dependencies provided via a git submodule.
+
+When downloading is complete, change your current working directory to the new project:
+
+```shell
+cd gke-istio-vpn-demo
+```
+
+Continue with the instructions below, running all commands from this directory.
 
 Open the `scripts/istio.env` file and set:
+
   * `ISTIO_PROJECT` to the ID of the project you want to use for Istio infrastructure
   * `GCE_PROJECT` to the ID of the project you want to use for GCE
   * Any variables you wish to customize
