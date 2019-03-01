@@ -30,6 +30,13 @@ kubectl delete -f "$ISTIO_DIR/install/kubernetes/mesh-expansion.yaml" --ignore-n
 
 # Finished deleting resources from GKE cluster
 
+# delete a couple of firewall rules manually due to this bug:
+# https://issuetracker.google.com/issues/126775279
+# TODO: remove line below when bug is solved
+gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete \
+  $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
+  --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") --quiet
+
 # Wait for Kubernetes resources to be deleted before deleting the cluster
 # Also, filter out the resources to what would specifically be created for
 # the GKE cluster
