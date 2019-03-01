@@ -20,37 +20,27 @@ set -x
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 # shellcheck source=scripts/istio.env
 source "$ROOT/scripts/istio.env"
-
-gcloud beta container clusters update "$ISTIO_CLUSTER" \
-    --update-addons=Istio=DISABLED \
-    --project "$ISTIO_PROJECT" \
-    --zone "$ZONE"
+ISTIO_DIR="$ROOT/istio-${ISTIO_VERSION}"
 
 kubectl delete ns vm --ignore-not-found=true
 kubectl delete ns bookinfo --ignore-not-found=true
-kubectl delete svc dns-ilb -n kube-system --ignore-not-found=true
+
+# Uninstall the ILBs installed for mesh expansion
+kubectl delete -f "$ISTIO_DIR/install/kubernetes/mesh-expansion.yaml" --ignore-not-found=true
 
 # Finished deleting resources from GKE cluster
 
 # Wait for Kubernetes resources to be deleted before deleting the cluster
 # Also, filter out the resources to what would specifically be created for
 # the GKE cluster
-until [[ $(gcloud --project="${ISTIO_PROJECT}" compute target-pools list \
-              --format="value(name)" \
-              --filter="instances[]:gke-${ISTIO_CLUSTER}") == "" ]]; do
-  echo "Waiting for cluster to become ready for destruction..."
-  sleep 10
-done
-
 until [[ $(gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules list --format yaml \
-              --filter "description:istio-system OR description:kube-system/dns-ilb") == "" ]]; do
+              --filter "description ~ istio-system.*ilb OR description:kube-system/dns-ilb") == "" ]]; do
   echo "Waiting for cluster to become ready for destruction..."
   sleep 10
 done
 
-until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list \
-             --filter "name:k8s AND targetTags.list():gke-${ISTIO_CLUSTER}" \
-             --format "value(name)") == "" ]]; do
+until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format yaml \
+             --filter "description ~ istio-system.*ilb OR description:kube-system/dns-ilb")  == "" ]]; do
   echo "Waiting for cluster to become ready for destruction..."
   sleep 10
 done
