@@ -40,10 +40,12 @@ until [[ $(gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules list --f
 done
 
 until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format yaml \
-             --filter "description ~ istio-system.*ilb OR description:kube-system/dns-ilb")  == "" ]]; do
+             --filter "(name:node-hc AND targetTags.list():gke-${ISTIO_CLUSTER}) OR description ~ istio-system.*ilb OR description:kube-system/dns-ilb")  == "" ]]; do
   echo "Waiting for cluster to become ready for destruction..."
   sleep 10
 done
+
+sleep 5
 
 # Tear down all of the infrastructure created by Terraform
 (cd "$ROOT/terraform"; terraform init; terraform destroy -input=false -auto-approve\
