@@ -147,12 +147,6 @@ if [[ ! "$(kubectl get clusterrolebinding --field-selector metadata.name=cluster
     --clusterrole=cluster-admin --user="$(gcloud config get-value core/account)"
 fi
 
-gcloud beta container clusters update "$ISTIO_CLUSTER" \
-    --update-addons=Istio=ENABLED \
-    --istio-config=auth=MTLS_STRICT \
-    --project "$ISTIO_PROJECT" \
-    --zone "$ZONE"
-
 # Add label to enable Envoy auto-injection
 kubectl label namespace default istio-injection=enabled --overwrite=true
 
@@ -230,7 +224,6 @@ kubectl apply -n default \
 # Install and deploy the database used by the Istio service
 gcloud compute ssh "${GCE_VM}" --project="${GCE_PROJECT}" --zone "${ZONE}" \
   --command "$(cat "$ROOT"/scripts/setup-gce-vm.sh)"
-
 
 # Get the information about the gateway used by Istio to expose the BookInfo
 # application
