@@ -217,11 +217,10 @@ the URL provided at the end of the installation script.
 You'll see a URL for the BookInfo web site. After taking a look, run:
 
 ```shell
-./scripts/validate.sh <STARS>
+make validate
 ```
 
-where `<STARS>` is the number of stars to be returned as the rating given by the
-first review on the product page.
+This will change the rating between 1 and 5 stars for Reviewer1.
 
 Refresh the page in your browser; the first rating should reflect the
 number of stars passed to the validate script. Behind the scenes, the validate
