@@ -86,8 +86,7 @@ This demonstration will create a number of resources.
 
 ## Configure gcloud
 
-When using Cloud Shell execute the following
-command in order to setup gcloud cli. When executing this command please setup your region and zone.
+When using Cloud Shell execute the following command in order to setup gcloud cli. When executing this command please setup your region and zone.
 
 ```console
 gcloud init
@@ -109,30 +108,7 @@ To create projects:
 
   ![](./images/new-project-name.png)
 
-1. Enable billing by clicking on the three lines in the top left corner
-select `Billing` and enable it:
-
-  ![](./images/billing-menu.png)
-
-If necessary, repeat for a second project.
-
 ## Deployment
-
-Use `git` to clone this project to your local machine:
-
-```shell
-git clone --recursive https://github.com/GoogleCloudPlatform/gke-istio-vpn-demo
-```
-
-Note that the `--recursive` argument is required to download dependencies provided via a git submodule.
-
-When downloading is complete, change your current working directory to the new project:
-
-```shell
-cd gke-istio-vpn-demo
-```
-
-Continue with the instructions below, running all commands from this directory.
 
 Open the `scripts/istio.env` file and set:
 
@@ -151,6 +127,7 @@ make create
 This make target calls the `scripts/create.sh` script which will use Terraform to automatically build out necessary infrastructure, including a Kubernetes cluster, and will then use `kubectl` to deploy application components and other resource to the cluster.
 
 ### Noteworthy Aspects of the Deployment:
+
 1. The GKE cluster uses IP aliasing, without this feature, the demo would not
 work. IP Aliasing is a feature by which services and pods can have their IP
 addresses set to values within a specific CIDR block, which allows them to be
