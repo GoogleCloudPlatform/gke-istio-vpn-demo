@@ -7,6 +7,7 @@
   * [Architecture](#architecture)
      * [Application architecture](#application-architecture)
      * [Infrastructure architecture](#infrastructure-architecture)
+  * [Run Demo using Cloud Shell](#run-demo-using-cloud-shell)
   * [Configure gcloud](#configure-gcloud)
   * [Creating a project](#creating-a-project)
   * [Deployment](#deployment)
@@ -83,6 +84,13 @@ This demonstration will create a number of resources.
 ### Infrastructure architecture
 
 ![](./images/istio-gke-gce-vpn.png)
+
+## Run Demo using Cloud Shell
+
+Use the `--recursive` argument to download dependencies provided via a git submodule.
+
+```shell
+git submodule update --init --recursive
 
 ## Configure gcloud
 

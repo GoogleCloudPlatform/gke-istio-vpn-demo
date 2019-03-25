@@ -95,7 +95,14 @@ This demonstration will create a number of resources.
 
 Click the button below to run the demo in a [Google Cloud Shell](https://cloud.google.com/shell/docs/).
 
-[![Open in Cloud Shell](http://gstatic.com/cloudssh/images/open-btn.svg)](https://console.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/gke-istio-vpn-demo.git&amp;https://github.com/GoogleCloudPlatform/gke-istio-shared.git&amp;cloudshell_image=gcr.io/graphite-cloud-shell-images/terraform:latest&amp;cloudshell_tutorial=README.md)
+[![Open in Cloud Shell](http://gstatic.com/cloudssh/images/open-btn.svg)](https://console.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/gke-istio-vpn-demo.git&amp;cloudshell_image=gcr.io/graphite-cloud-shell-images/terraform:latest&amp;cloudshell_tutorial=README.md)
+
+
+Use the `--recursive` argument to download dependencies provided via a git submodule.
+
+```shell
+git submodule update --init --recursive
+```
 
 All the tools for the demo are installed. When using Cloud Shell execute the following
 command in order to setup gcloud cli. When executing this command please setup your region
