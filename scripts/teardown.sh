@@ -55,7 +55,7 @@ gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete \
 until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
   --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") == "" ]]; do
   echo "Waiting for firewall rules to delete..."
-  sleep 10
+  sleep 30
 done
 
 # Tear down all of the infrastructure created by Terraform
