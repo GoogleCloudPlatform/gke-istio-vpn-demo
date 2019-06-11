@@ -28,6 +28,26 @@ kubectl delete ns bookinfo --ignore-not-found=true
 # Uninstall the ILBs installed for mesh expansion
 kubectl delete -f "$ISTIO_DIR/install/kubernetes/mesh-expansion.yaml" --ignore-not-found=true
 
+# Uninstall the remaining Istio resources
+kubectl delete -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/platform/kube/bookinfo.yaml" \
+  --ignore-not-found=true
+kubectl delete -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/networking/bookinfo-gateway.yaml" \
+  --ignore-not-found=true
+kubectl delete -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/networking/destination-rule-all-mtls.yaml" \
+  --ignore-not-found=true
+kubectl delete -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/networking/virtual-service-reviews-v3.yaml" \
+  --ignore-not-found=true
+kubectl delete -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/networking/virtual-service-ratings-mysql-vm.yaml" \
+  --ignore-not-found=true
+kubectl delete -n default \
+  -f "$ISTIO_DIR/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-vm.yaml" \
+  --ignore-not-found=true
+
 # Finished deleting resources from GKE cluster
 
 # Wait for Kubernetes resources to be deleted before deleting the cluster
@@ -55,10 +75,8 @@ gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete \
 until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
   --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") == "" ]]; do
   echo "Waiting for firewall rules to delete..."
-  sleep 30
+ sleep 10
 done
-
-sleep 120
 
 # Tear down all of the infrastructure created by Terraform
 (cd "$ROOT/terraform"; terraform init; terraform destroy -input=false -auto-approve\
