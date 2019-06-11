@@ -52,14 +52,14 @@ done
 # https://issuetracker.google.com/issues/126775279
 # TODO: remove line below when bug is solved
 # Wait for the firewall rules to delete
-until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
-  --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") == "" ]]; do
-  gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete \
-    $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
-    --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") --quiet
-  echo "Waiting for firewall rules to delete..."
-  sleep 10
-done
+#until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
+#  --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") == "" ]]; do
+#  gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete \
+#    $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
+#    --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") --quiet
+#  echo "Waiting for firewall rules to delete..."
+#  sleep 10
+#done
 
 # Tear down all of the infrastructure created by Terraform
 (cd "$ROOT/terraform"; terraform init; terraform destroy -input=false -auto-approve\
