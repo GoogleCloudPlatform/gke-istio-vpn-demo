@@ -29,7 +29,8 @@ kubectl delete ns bookinfo --ignore-not-found=true
 kubectl delete -f "$ISTIO_DIR/install/kubernetes/mesh-expansion.yaml" --ignore-not-found=true
 
 # Fully remove Istio components
-kubectl delete -f "$ISTIO_DIR/install/kubernetes/istio-demo.yaml" --ignore-not-found=true
+gcloud beta container clusters update $ISTIO_CLUSTER --project=$ISTIO_PROJECT --update-addons=Istio=DISABLED
+#kubectl delete -f "$ISTIO_DIR/install/kubernetes/istio-demo.yaml" --ignore-not-found=true #this one
 
 # Finished deleting resources from GKE cluster
 
@@ -52,14 +53,16 @@ done
 # https://issuetracker.google.com/issues/126775279
 # TODO: remove line below when bug is solved
 # Wait for the firewall rules to delete
-#until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
-#  --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") == "" ]]; do
-#  gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete \
-#    $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
-#    --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") --quiet
-#  echo "Waiting for firewall rules to delete..."
-#  sleep 10
-#done
+until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
+  --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") == "" ]]; do
+  gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete \
+    $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
+    --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") --quiet
+  echo "Waiting for firewall rules to delete..."
+  sleep 10
+done
+
+#exit
 
 # Tear down all of the infrastructure created by Terraform
 (cd "$ROOT/terraform"; terraform init; terraform destroy -input=false -auto-approve\
