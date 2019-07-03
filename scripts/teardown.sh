@@ -38,13 +38,13 @@ kubectl delete --v=1 --request-timeout='10s' -f "$ISTIO_DIR/install/kubernetes/i
 # the GKE cluster
 until [[ $(gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules list --format yaml \
               --filter "description ~ istio-system.*ilb OR description:kube-system/dns-ilb") == "" ]]; do
-  echo "Waiting for cluster to become ready for destruction..."
+  echo "Waiting for forwarding rules to be removed..."
   sleep 10
 done
 
 until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format yaml \
              --filter "(name:node-hc AND targetTags.list():gke-${ISTIO_CLUSTER}) OR description ~ istio-system.*ilb OR description:kube-system/dns-ilb")  == "" ]]; do
-  echo "Waiting for cluster to become ready for destruction..."
+  echo "Waiting for firewall rules to be removed..."
   sleep 10
 done
 
@@ -53,7 +53,7 @@ done
 # TODO: remove line below when bug is solved
 gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete \
   $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
-  --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") --quiet
+  --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") --quiet || true
 # Wait for the firewall rules to delete
 until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
   --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") == "" ]]; do
