@@ -26,7 +26,10 @@ kubectl delete ns vm --ignore-not-found=true
 kubectl delete ns bookinfo --ignore-not-found=true
 
 # Uninstall the ILBs installed for mesh expansion
-kubectl delete -f "$ISTIO_DIR/install/kubernetes/mesh-expansion.yaml" --ignore-not-found=true
+kubectl delete --v=1 --request-timeout='10s' -f "$ISTIO_DIR/install/kubernetes/mesh-expansion.yaml" --ignore-not-found=true
+
+# Fully remove Istio components
+kubectl delete --v=1 --request-timeout='10s' -f "$ISTIO_DIR/install/kubernetes/istio-demo.yaml" --ignore-not-found=true
 
 # Finished deleting resources from GKE cluster
 
