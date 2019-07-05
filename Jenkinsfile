@@ -85,7 +85,6 @@ spec:
 
     stage('Validate') {
         container(containerName) {
-          sh "sleep 3600"
           sh "make validate"
         }
     }
