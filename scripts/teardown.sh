@@ -48,18 +48,18 @@ until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --for
   sleep 10
 done
 
-## delete a couple of firewall rules manually due to this bug:
-## https://issuetracker.google.com/issues/126775279
-## TODO: remove line below when bug is solved
-#gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete \
-#  $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
-#  --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") --quiet || true
-## Wait for the firewall rules to delete
-#until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
-#  --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") == "" ]]; do
-#  echo "Waiting for firewall rules to delete..."
-#  sleep 10
-#done
+# delete a couple of firewall rules manually due to this bug:
+# https://issuetracker.google.com/issues/126775279
+# TODO: remove line below when bug is solved
+gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete \
+  $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
+  --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") --quiet || true
+# Wait for the firewall rules to delete
+until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
+  --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") == "" ]]; do
+  echo "Waiting for firewall rules to delete..."
+  sleep 10
+done
 
 # Tear down all of the infrastructure created by Terraform
 (cd "$ROOT/terraform"; terraform init; terraform destroy -input=false -auto-approve\
