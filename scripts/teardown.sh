@@ -25,6 +25,11 @@ ISTIO_DIR="$ROOT/istio-${ISTIO_VERSION}"
 kubectl delete ns vm --ignore-not-found=true
 kubectl delete ns bookinfo --ignore-not-found=true
 
+# Disable the Istio GKE Addon
+gcloud beta container clusters update "${ISTIO_CLUSTER}" \
+  --project "${ISTIO_PROJECT}" --zone="${ZONE}" \
+  --update-addons=Istio=DISABLED
+
 # Delete all created Istio and Kubernetes resources
 kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
   "${ISTIO_DIR}/install/kubernetes/istio-demo.yaml") --ignore-not-found="true"
@@ -61,8 +66,6 @@ until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --for
   echo "Waiting for firewall rules to delete..."
   sleep 5
 done
-
-sleep 900
 
 # Tear down all of the infrastructure created by Terraform
 (cd "$ROOT/terraform"; terraform init; terraform destroy -input=false -auto-approve\
