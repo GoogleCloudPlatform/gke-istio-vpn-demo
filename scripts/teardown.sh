@@ -22,6 +22,8 @@ ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 source "$ROOT/scripts/istio.env"
 ISTIO_DIR="$ROOT/istio-${ISTIO_VERSION}"
 
+sleep 900
+
 kubectl delete ns vm --ignore-not-found=true
 kubectl delete ns bookinfo --ignore-not-found=true
 
@@ -38,13 +40,13 @@ kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
 # Also, filter out the resources to what would specifically be created for
 # the GKE cluster
 until [[ $(gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules list --format yaml \
-              --filter "description ~ istio-system.*ilb OR description:kube-system/dns-ilb") == "" ]]; do
+  --filter "(description ~ istio-system.*ilb OR description:kube-system/dns-ilb) AND network ~ /istio-network$") == "" ]]; do
   echo "Waiting for forwarding rules to be removed..."
   sleep 10
 done
 
 until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format yaml \
-             --filter "(name:node-hc AND targetTags.list():gke-${ISTIO_CLUSTER}) OR description ~ istio-system.*ilb OR description:kube-system/dns-ilb")  == "" ]]; do
+  --filter "(name:node-hc AND targetTags.list():gke-${ISTIO_CLUSTER}) OR description ~ istio-system.*ilb OR description:kube-system/dns-ilb")  == "" ]]; do
   echo "Waiting for firewall rules to be removed..."
   sleep 10
 done
