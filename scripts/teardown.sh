@@ -25,8 +25,8 @@ ISTIO_DIR="$ROOT/istio-${ISTIO_VERSION}"
 kubectl delete ns vm --ignore-not-found=true
 kubectl delete ns bookinfo --ignore-not-found=true
 
-# Disable the Istio GKE Addon to prevent it from automatically 
-# recreating Istio services which create load balancers and 
+# Disable the Istio GKE Addon to prevent it from automatically
+# recreating Istio services which create load balancers and
 # firewall rules which would block a successful TF destroy.
 gcloud beta container clusters update "${ISTIO_CLUSTER}" \
   --project "${ISTIO_PROJECT}" --zone="${ZONE}" \
