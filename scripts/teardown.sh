@@ -22,17 +22,15 @@ ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 source "$ROOT/scripts/istio.env"
 ISTIO_DIR="$ROOT/istio-${ISTIO_VERSION}"
 
-sleep 900
-
 kubectl delete ns vm --ignore-not-found=true
 kubectl delete ns bookinfo --ignore-not-found=true
 
 # Delete all created Istio and Kubernetes resources
 kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
-  "${ISTIO_DIR}/install/kubernetes/mesh-expansion.yaml") --ignore-not-found="true"
+  "${ISTIO_DIR}/install/kubernetes/istio-demo.yaml") --ignore-not-found="true"
 
 kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
-  "${ISTIO_DIR}/install/kubernetes/istio-demo.yaml") --ignore-not-found="true"
+  "${ISTIO_DIR}/install/kubernetes/mesh-expansion.yaml") --ignore-not-found="true"
 
 # Finished deleting resources from GKE cluster
 
