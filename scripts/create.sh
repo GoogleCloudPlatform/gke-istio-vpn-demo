@@ -151,7 +151,7 @@ fi
 kubectl label namespace default istio-injection=enabled --overwrite=true
 
 # wait for istio-system to be created
-until [ $(kubectl get ns  | grep -c  istio-system) -eq "1" ]; do echo 'waiting for ns istio-system to be created'; sleep 1; done
+until [ "$(kubectl get ns  | grep -c  istio-system)" -eq "1" ]; do echo 'waiting for ns istio-system to be created'; sleep 1; done
 
 # Install the ILBs necessary for mesh expansion
 kubectl apply -f "$ISTIO_DIR/install/kubernetes/mesh-expansion.yaml"

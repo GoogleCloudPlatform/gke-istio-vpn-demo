@@ -25,9 +25,6 @@ ISTIO_DIR="$ROOT/istio-${ISTIO_VERSION}"
 kubectl delete ns vm --ignore-not-found=true
 kubectl delete ns bookinfo --ignore-not-found=true
 
-# TODO remove
-sleep 3600
-
 # Delete all created Istio and Kubernetes resources
 kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
   "${ISTIO_DIR}/install/kubernetes/mesh-expansion.yaml") --ignore-not-found="true"
