@@ -40,13 +40,13 @@ kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
 until [[ $(gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules list --format yaml \
   --filter "(description ~ istio-system.*ilb OR description:kube-system/dns-ilb) AND network ~ /istio-network$") == "" ]]; do
   echo "Waiting for forwarding rules to be removed..."
-  sleep 10
+  sleep 5
 done
 
 until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format yaml \
   --filter "(name:node-hc AND targetTags.list():gke-${ISTIO_CLUSTER}) OR description ~ istio-system.*ilb OR description:kube-system/dns-ilb")  == "" ]]; do
   echo "Waiting for firewall rules to be removed..."
-  sleep 10
+  sleep 5
 done
 
 # delete a couple of firewall rules manually due to this bug:
@@ -59,7 +59,7 @@ until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --for
     $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
     --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") --quiet || true
   echo "Waiting for firewall rules to delete..."
-  sleep 20
+  sleep 5 
 done
 
 sleep 900
