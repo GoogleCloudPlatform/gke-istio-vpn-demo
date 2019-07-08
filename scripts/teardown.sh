@@ -59,7 +59,7 @@ until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --for
     $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)" \
     --filter "(name:node-http-hc OR name:k8s-fw) AND targetTags.list():gke-${ISTIO_CLUSTER}") --quiet || true
   echo "Waiting for firewall rules to delete..."
-  sleep 5 
+  sleep 5
 done
 
 sleep 900
