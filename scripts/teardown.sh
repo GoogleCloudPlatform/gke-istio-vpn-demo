@@ -32,12 +32,9 @@ gcloud beta container clusters update "${ISTIO_CLUSTER}" \
   --project "${ISTIO_PROJECT}" --zone="${ZONE}" \
   --update-addons=Istio=DISABLED
 
-# Delete all created Istio and Kubernetes resources
+# Delete critical Istio resources
 kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
-  "${ISTIO_DIR}/install/kubernetes/istio-demo.yaml") --ignore-not-found="true"
-
-kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
-  "${ISTIO_DIR}/install/kubernetes/mesh-expansion.yaml") --ignore-not-found="true"
+  "${ISTIO_DIR}/install/kubernetes/mesh-expansion.yaml") --ignore-not-found="true" || true
 
 # Wait for Kubernetes resources to be deleted before deleting the cluster
 # Also, filter out the resources to what would specifically be created for
