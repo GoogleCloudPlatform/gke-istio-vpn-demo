@@ -25,7 +25,9 @@ ISTIO_DIR="$ROOT/istio-${ISTIO_VERSION}"
 kubectl delete ns vm --ignore-not-found=true
 kubectl delete ns bookinfo --ignore-not-found=true
 
-# Disable the Istio GKE Addon
+# Disable the Istio GKE Addon to prevent it from automatically 
+# recreating Istio services which create load balancers and 
+# firewall rules which would block a successful TF destroy.
 gcloud beta container clusters update "${ISTIO_CLUSTER}" \
   --project "${ISTIO_PROJECT}" --zone="${ZONE}" \
   --update-addons=Istio=DISABLED
@@ -36,8 +38,6 @@ kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
 
 kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
   "${ISTIO_DIR}/install/kubernetes/mesh-expansion.yaml") --ignore-not-found="true"
-
-# Finished deleting resources from GKE cluster
 
 # Wait for Kubernetes resources to be deleted before deleting the cluster
 # Also, filter out the resources to what would specifically be created for
