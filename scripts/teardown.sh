@@ -62,6 +62,8 @@ until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --for
   sleep 20
 done
 
+sleep 900
+
 # Tear down all of the infrastructure created by Terraform
 (cd "$ROOT/terraform"; terraform init; terraform destroy -input=false -auto-approve\
   -var "istio_project=${ISTIO_PROJECT}" \
