@@ -51,13 +51,13 @@ done
 ##   echo "Waiting for forwarding rules to be removed..."
 ##   sleep 3
 ## done
-## 
+##
 ## until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format yaml \
 ##   --filter "(name:node-hc AND targetTags.list():gke-${ISTIO_CLUSTER}) OR description ~ istio-system.*ilb OR description:kube-system/dns-ilb")  == "" ]]; do
 ##   echo "Waiting for firewall rules to be removed..."
 ##   sleep 3
 ## done
- 
+
 # delete a couple of firewall rules manually due to this bug:
 # https://issuetracker.google.com/issues/126775279
 # TODO: remove line below when bug is solved
