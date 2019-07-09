@@ -32,6 +32,13 @@ gcloud beta container clusters update "${ISTIO_CLUSTER}" \
   --project "${ISTIO_PROJECT}" --zone="${ZONE}" \
   --update-addons=Istio=DISABLED
 
+# Pause build for debugging
+touch pausefile
+until [ ! -f pausefile ]; do
+  echo "waiting until pausefile is removed to proceed"
+  sleep 10
+done
+
 # Delete the dns-ilb service explicitly since it is left over.
 kubectl delete svc -n kube-system dns-ilb --ignore-not-found=true
 
