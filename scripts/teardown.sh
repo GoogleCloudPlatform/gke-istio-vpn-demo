@@ -68,13 +68,6 @@ for FW_RULE in ${FW_RULES}; do
   gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete "${FW_RULE}"
 done
 
-# Pause build for debugging
-touch pausefile
-until [ ! -f pausefile ]; do
-  echo "waiting until pausefile is removed to proceed"
-  sleep 10
-done
-
 # Tear down all of the infrastructure created by Terraform
 (cd "$ROOT/terraform"; terraform init; terraform destroy -input=false -auto-approve\
   -var "istio_project=${ISTIO_PROJECT}" \
