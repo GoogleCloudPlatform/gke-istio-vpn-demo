@@ -25,28 +25,39 @@ ISTIO_DIR="$ROOT/istio-${ISTIO_VERSION}"
 kubectl delete ns vm --ignore-not-found=true
 kubectl delete ns bookinfo --ignore-not-found=true
 
-# Delete critical Istio resources
-kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
-  "${ISTIO_DIR}/install/kubernetes/istio-demo.yaml") --ignore-not-found="true"
+# Disable the Istio GKE Addon to prevent it from automatically
+# recreating Istio services which create load balancers and
+# firewall rules which would block a successful TF destroy.
+gcloud beta container clusters update "${ISTIO_CLUSTER}" \
+  --project "${ISTIO_PROJECT}" --zone="${ZONE}" \
+  --update-addons=Istio=DISABLED
 
+# Delete critical Istio resources
 kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
   "${ISTIO_DIR}/install/kubernetes/mesh-expansion.yaml") --ignore-not-found="true"
 
-# Wait for Kubernetes resources to be deleted before deleting the cluster
-# Also, filter out the resources to what would specifically be created for
-# the GKE cluster
-until [[ $(gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules list --format yaml \
-  --filter "(description ~ istio-system.*ilb OR description:kube-system/dns-ilb) AND network ~ /istio-network$") == "" ]]; do
-  echo "Waiting for forwarding rules to be removed..."
-  sleep 3
+# Pause build for debugging
+touch pausefile
+until [ ! -f pausefile ]; do
+  echo "waiting until pausefile is removed to proceed"
+  sleep 10 
 done
 
-until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format yaml \
-  --filter "(name:node-hc AND targetTags.list():gke-${ISTIO_CLUSTER}) OR description ~ istio-system.*ilb OR description:kube-system/dns-ilb")  == "" ]]; do
-  echo "Waiting for firewall rules to be removed..."
-  sleep 3
-done
-
+## # Wait for Kubernetes resources to be deleted before deleting the cluster
+## # Also, filter out the resources to what would specifically be created for
+## # the GKE cluster
+## until [[ $(gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules list --format yaml \
+##   --filter "(description ~ istio-system.*ilb OR description:kube-system/dns-ilb) AND network ~ /istio-network$") == "" ]]; do
+##   echo "Waiting for forwarding rules to be removed..."
+##   sleep 3
+## done
+## 
+## until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format yaml \
+##   --filter "(name:node-hc AND targetTags.list():gke-${ISTIO_CLUSTER}) OR description ~ istio-system.*ilb OR description:kube-system/dns-ilb")  == "" ]]; do
+##   echo "Waiting for firewall rules to be removed..."
+##   sleep 3
+## done
+ 
 # delete a couple of firewall rules manually due to this bug:
 # https://issuetracker.google.com/issues/126775279
 # TODO: remove line below when bug is solved
@@ -59,15 +70,6 @@ until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --for
   echo "Waiting for firewall rules to delete..."
   sleep 3
 done
-
-sleep 900
-
-# Disable the Istio GKE Addon to prevent it from automatically
-# recreating Istio services which create load balancers and
-# firewall rules which would block a successful TF destroy.
-gcloud beta container clusters update "${ISTIO_CLUSTER}" \
-  --project "${ISTIO_PROJECT}" --zone="${ZONE}" \
-  --update-addons=Istio=DISABLED
 
 # Tear down all of the infrastructure created by Terraform
 (cd "$ROOT/terraform"; terraform init; terraform destroy -input=false -auto-approve\
