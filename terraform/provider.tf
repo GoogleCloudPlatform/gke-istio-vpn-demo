@@ -14,6 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+provider "google-beta" {
+version = "~> v2.0.0"
+region = "${var.region}"
+}
+
 provider "google" {
   version = "~> v1.17"
   region  = "${var.region}"

@@ -277,6 +277,15 @@ resource "google_container_cluster" "istio_cluster" {
 
   initial_node_count = "4"
 
+  provider = "google-beta"
+
+  addons_config {
+    istio_config {
+      disabled = false
+      auth = "AUTH_MUTUAL_TLS"
+    }
+  }
+
   // We specify the type of node to use.
   node_config {
     machine_type = "n1-standard-2"

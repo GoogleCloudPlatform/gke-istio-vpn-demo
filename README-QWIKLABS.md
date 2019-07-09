@@ -7,12 +7,7 @@
   * [Architecture](#architecture)
      * [Application architecture](#application-architecture)
      * [Infrastructure architecture](#infrastructure-architecture)
-  * [Prerequisites](#prerequisites)
-     * [Run Demo in a Google Cloud Shell](#run-demo-in-a-google-cloud-shell)
-     * [Tools](#tools)
-        * [Install Cloud SDK](#install-cloud-sdk)
-        * [Install kubectl CLI](#install-kubectl-cli)
-        * [Install Terraform](#install-terraform)
+  * [Configure gcloud](#configure-gcloud)
   * [Creating a project](#creating-a-project)
   * [Deployment](#deployment)
      * [Noteworthy Aspects of the Deployment:](#noteworthy-aspects-of-the-deployment)
@@ -69,13 +64,17 @@ the Istio service mesh.
 
 This demonstration will create a number of resources.
 
-* A single (GKE) cluster with IP aliasing turned on in a custom network in project A
+* A single (GKE) cluster with IP aliasing turned on in a custom network in
+  project A
 * A Google Compute Engine (GCE) instance in a custom network project B
-* A VPN bridging the two networks containing the GKE cluster and the GCE instance
+* A VPN bridging the two networks containing the GKE cluster and the GCE
+  instance
 * The Istio service mesh installed in the GKE cluster
 * The [BookInfo](https://istio.io/docs/examples/bookinfo/) application installed in the Istio service mesh
-* A firewall rule allowing full SSH access to the GCE instance from any IP address
-* A firewall rule allowing full access to the MySQL database from the GKE cluster
+* A firewall rule allowing full SSH access to the GCE instance from any IP
+  address
+* A firewall rule allowing full access to the MySQL database from the GKE
+  cluster
 
 ### Application architecture
 
@@ -85,42 +84,17 @@ This demonstration will create a number of resources.
 
 ![](./images/istio-gke-gce-vpn.png)
 
-## Prerequisites
+## Configure gcloud
 
-### Run Demo in a Google Cloud Shell
-
-Click the button below to run the demo in a [Google Cloud Shell](https://cloud.google.com/shell/docs/).
-
-[![Open in Cloud Shell](http://gstatic.com/cloudssh/images/open-btn.svg)](https://console.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/gke-istio-vpn-demo.git&amp;https://github.com/GoogleCloudPlatform/gke-istio-shared.git&amp;cloudshell_image=gcr.io/graphite-cloud-shell-images/terraform:latest&amp;cloudshell_tutorial=README.md)
-
-All the tools for the demo are installed. When using Cloud Shell execute the following command in order to setup gcloud cli. When executing this command please setup your region and zone.
+When using Cloud Shell execute the following command in order to setup gcloud cli. When executing this command please setup your region and zone.
 
 ```console
 gcloud init
 ```
 
-### Tools
-
-In order to use the code in this demo you will need to have have access to a bash-compatible shell with the following tools installed:
-
-1. [Terraform >= 0.11.7](https://www.terraform.io/downloads.html)
-2. [Google Cloud SDK version >= 204.0.0](https://cloud.google.com/sdk/docs/downloads-versioned-archives)
-3. [kubectl matching the latest GKE version](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-4. Two [GCP projects](https://console.cloud.google.com/) with billing enabled
-
-#### Install Cloud SDK
-The Google Cloud SDK is used to interact with your GCP resources. [Installation instructions](https://cloud.google.com/sdk/downloads) for multiple platforms are available online.
-
-#### Install kubectl CLI
-
-The kubectl CLI is used to interteract with both Kubernetes Engine and kubernetes in general. [Installation instructions](https://cloud.google.com/kubernetes-engine/docs/quickstart) for multiple platforms are available online.
-
-#### Install Terraform
-
-Terraform is used to automate the manipulation of cloud infrastructure. Its [installation instructions](https://www.terraform.io/intro/getting-started/install.html) are also available online.
-
 ## Creating a project
-In order to complete this demo, two projects need to exist, one for the GKE cluster and a second for the GCE instance, which will be connected via a VPN.
+In order to complete this demo, two projects need to exist, one for the GKE
+cluster and a second for the GCE instance, which will be connected via a VPN.
 
 To create projects:
 1. Log in to the [GCP Console](http://console.cloud.google.com/)
@@ -134,29 +108,7 @@ To create projects:
 
   ![](./images/new-project-name.png)
 
-1. Enable billing by clicking on the three lines in the top left corner select `Billing` and enable it:
-
-  ![](./images/billing-menu.png)
-
-If necessary, repeat for a second project.
-
 ## Deployment
-
-Use `git` to clone this project to your local machine:
-
-```shell
-git clone --recursive https://github.com/GoogleCloudPlatform/gke-istio-vpn-demo
-```
-
-Note that the `--recursive` argument is required to download dependencies provided via a git submodule.
-
-When downloading is complete, change your current working directory to the new project:
-
-```shell
-cd gke-istio-vpn-demo
-```
-
-Continue with the instructions below, running all commands from this directory.
 
 Open the `scripts/istio.env` file and set:
 
@@ -175,20 +127,32 @@ make create
 This make target calls the `scripts/create.sh` script which will use Terraform to automatically build out necessary infrastructure, including a Kubernetes cluster, and will then use `kubectl` to deploy application components and other resource to the cluster.
 
 ### Noteworthy Aspects of the Deployment:
-1. The GKE cluster uses IP aliasing, without this feature, the demo would not work. IP Aliasing is a feature by which services and pods can have their IP addresses set to values within a specific CIDR block, which allows them to be known in advance of a deployment, and callable by other resources. This also ensures that the IP addresses will not conflict with other GCP resources and provides an additional mechanism for firewall traffic control (e.g. rules on the pod may differ from those on the underlying host).
 
+1. The GKE cluster uses IP aliasing, without this feature, the demo would not
+work. IP Aliasing is a feature by which services and pods can have their IP
+addresses set to values within a specific CIDR block, which allows them to be
+known in advance of a deployment, and callable by other resources. This also
+ensures that the IP addresses will not conflict with other GCP resources and
+provides an additional mechanism for firewall traffic control (e.g. rules on the
+pod may differ from those on the underlying host).
 For more information on IP Aliasing see:
 https://cloud.google.com/kubernetes-engine/docs/how-to/alias-ips
 
-1. The GKE cluster's IP CIDR blocks are defined in the `istio.env` file and can be changed in the event that other values are needed (e.g. if they conflict with other IP address space).
+1. The GKE cluster's IP CIDR blocks are defined in the `istio.env` file and can
+be changed in the event that other values are needed (e.g. if they conflict with
+other IP address space).
 
-1. Firewall and Routing rules are created at deployment time to facilitate the necessary communication without exposing ports and services unnecessarily.
+1. Firewall and Routing rules are created at deployment time to facilitate the
+necessary communication without exposing ports and services unnecessarily.
 
-1. The VPN configuration (endpoints, firewalls and routing rules) are defined in the included terraform configuration, `terraform/main.tf`. For more information on VPNs see: https://cloud.google.com/vpn/docs/how-to
+1. The VPN configuration (endpoints, firewalls and routing rules) are defined in
+the included terraform configuration, `terraform/main.tf`. For more information on VPNs
+see: https://cloud.google.com/vpn/docs/how-to
 
 ## Validation
 
-To validate that everything is working correctly, first open your browser to the URL provided at the end of the installation script.
+To validate that everything is working correctly, first open your browser to
+the URL provided at the end of the installation script.
 You'll see a URL for the BookInfo web site. After taking a look, run:
 
 ```shell
@@ -197,7 +161,11 @@ make validate
 
 This will change the rating between 1 and 5 stars for Reviewer1.
 
-Refresh the page in your browser; the first rating should reflect the number of stars passed to the validate script. Behind the scenes, the validate script is directly editing the database on the GCE VM that was integrated into the mesh, proving that the BookInfo application is using the database on the VM as the source of the rating data.
+Refresh the page in your browser; the first rating should reflect the
+number of stars passed to the validate script. Behind the scenes, the validate
+script is directly editing the database on the GCE VM that was integrated into
+the mesh, proving that the BookInfo application is using the database on the VM
+as the source of the rating data.
 
 ## Tear Down
 
@@ -211,12 +179,6 @@ This will destroy all the resources created by Terraform including everything de
 
 ## Troubleshooting
 
-**Problem:** Functions in gke-istio-shared are not available: `gke-istio-shared/verify-functions.sh`
-
-**Solution:** If you are running this manually, you may be missing your git submodule. To fix this, run:
-`git submodule update --init`
-
-----
 **Problem:** The Book Reviews section is returning an error stating that the ratings service is not available.
 
 **Solution:** Istio may still be configuring the mesh. Wait for a minute so while refreshing the page.
@@ -243,7 +205,7 @@ This will destroy all the resources created by Terraform including everything de
 
 **Problem:** The install script gives an error like:
 
->ERROR: (gcloud.services.enable) User [{your-email address}] does not have permission to access service compute.googleapis.com:enable] (or it may not exist): Project '{your-project-name}' not found or permission denied.
+>ERROR: (gcloud.services.enable) User [{your-email address}] does not have permission to access service [compute.googleapis.com:enable] (or it may not exist): Project '{your-project-name}' not found or permission denied.
 
 **Solution:** Enter the project Id and not the project name into `scripts/istio.env`
 
