@@ -40,7 +40,7 @@ kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
 touch pausefile
 until [ ! -f pausefile ]; do
   echo "waiting until pausefile is removed to proceed"
-  sleep 10 
+  sleep 10
 done
 
 ## # Wait for Kubernetes resources to be deleted before deleting the cluster
