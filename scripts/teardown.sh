@@ -35,21 +35,14 @@ gcloud beta container clusters update "${ISTIO_CLUSTER}" \
 # Delete the dns-ilb service explicitly since it is left over.
 kubectl delete svc -n kube-system dns-ilb --ignore-not-found=true
 
-# Wait until the load balancer associated with the dns-ilb svc is gone
-until [[ $(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format yaml \
-  --filter "(description:kube-system/dns-ilb AND network ~ /istio-network$)") == "" ]]; do
-  echo "Waiting for DNS ILB forwarding rules to be removed..."
-  sleep 5
-done
-
 # Find all internal (ILB) forwarding rules in the network: istio-network
 FWDING_RULE_NAMES="$(gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules list \
   --format="value(name)"  \
   --filter "(description ~ istio-system.*ilb OR description:kube-system/dns-ilb) AND network ~ /istio-network$")"
 # Iterate and delete the forwarding rule by name and its corresponding backend-service by the same name
 for FWD_RULE in ${FWDING_RULE_NAMES}; do
-  gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules delete "${FWD_RULE}" --region="${REGION}"
-  gcloud --project="${ISTIO_PROJECT}" compute backend-services delete "${FWD_RULE}" --region="${REGION}"
+  gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules delete "${FWD_RULE}" --region="${REGION}" || true
+  gcloud --project="${ISTIO_PROJECT}" compute backend-services delete "${FWD_RULE}" --region="${REGION}" || true
 done
 
 # Find all target pools with this cluster as the target by name
