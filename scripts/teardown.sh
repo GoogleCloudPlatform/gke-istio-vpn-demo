@@ -86,7 +86,7 @@ done
 until [[ "$(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)"   --filter "targetTags.list():gke-${ISTIO_CLUSTER} AND NOT name ~ gke-${ISTIO_CLUSTER}")" == "" ]]; do
   FW_RULES="$(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)"   --filter "targetTags.list():gke-${ISTIO_CLUSTER} AND NOT name ~ gke-${ISTIO_CLUSTER}")"
   for FW_RULE in ${FW_RULES}; do
-    gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete "${FW_RULE}"
+    gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete "${FW_RULE}" || true
   done
   sleep 2
 done
