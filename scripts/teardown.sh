@@ -32,9 +32,9 @@ gcloud beta container clusters update "${ISTIO_CLUSTER}" \
   --project "${ISTIO_PROJECT}" --zone="${ZONE}" \
   --update-addons=Istio=DISABLED
 
-# Delete critical Istio resources
-kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
-  "${ISTIO_DIR}/install/kubernetes/mesh-expansion.yaml") --ignore-not-found="true"
+## Delete critical Istio resources
+#kubectl delete -f <("${ISTIO_DIR}/bin/istioctl" kube-inject -f \
+#  "${ISTIO_DIR}/install/kubernetes/mesh-expansion.yaml") --ignore-not-found="true"
 
 # Pause build for debugging
 touch pausefile
