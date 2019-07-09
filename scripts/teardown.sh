@@ -32,47 +32,63 @@ gcloud beta container clusters update "${ISTIO_CLUSTER}" \
   --project "${ISTIO_PROJECT}" --zone="${ZONE}" \
   --update-addons=Istio=DISABLED
 
-# Pause build for debugging
-touch pausefile
-until [ ! -f pausefile ]; do
-  echo "waiting until pausefile is removed to proceed"
-  sleep 10
+# Wait until all LBs have been cleaned up by the addon manager
+echo "Deleting Istio ILBs"
+for ISTIO_LB_NAME in istio-ingressgateway istio-pilot-ilb mixer-ilb; do
+  until [[ "$(kubectl get svc -n istio-system ${ISTIO_LB_NAME} -o=jsonpath="{.metadata.name}" --ignore-not-found=true)" == "" ]]; do
+    echo "Waiting for istio-system ${ISTIO_LB_NAME} to be removed..."
+    sleep 2
+  done
 done
 
-# Delete the dns-ilb service explicitly since it is left over.
+# If kube-system/dns-lib svc is present, delete it
 kubectl delete svc -n kube-system dns-ilb --ignore-not-found=true
-
-# Find all internal (ILB) forwarding rules in the network: istio-network
-FWDING_RULE_NAMES="$(gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules list \
-  --format="value(name)"  \
-  --filter "(description ~ istio-system.*ilb OR description:kube-system/dns-ilb) AND network ~ /istio-network$")"
-# Iterate and delete the forwarding rule by name and its corresponding backend-service by the same name
-for FWD_RULE in ${FWDING_RULE_NAMES}; do
-  gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules delete "${FWD_RULE}" --region="${REGION}" || true
-  gcloud --project="${ISTIO_PROJECT}" compute backend-services delete "${FWD_RULE}" --region="${REGION}" || true
+# Wait until its gone
+until [[ "$(kubectl get svc -n kube-system dns-ilb -o=jsonpath="{.metadata.name}" --ignore-not-found=true)" == "" ]]; do
+  echo "Waiting for kube-system dns-ilb to be removed..."
+  sleep 5
 done
 
-# Find all target pools with this cluster as the target by name
-TARGET_POOLS="$(gcloud --project="${ISTIO_PROJECT}" compute target-pools list --format="value(name)" --filter="(instances ~ gke-${ISTIO_CLUSTER})")"
-# Find all health checks with this cluster's nodes as the instances
-HEALTH_CHECKS="$(gcloud --project="${ISTIO_PROJECT}" compute target-pools list --format="value(healthChecks)" --filter="(instances ~ gke-${ISTIO_CLUSTER})" | sed 's/.*\/\(k8s\-.*$\)/\1/g')"
-# Delete the external (RLB) forwarding rules by name and the target pool by the same name
-for TARGET_POOL in ${TARGET_POOLS}; do
-  gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules delete "${TARGET_POOL}" --region="${REGION}"
-  gcloud --project="${ISTIO_PROJECT}" compute target-pools delete "${TARGET_POOL}" --region="${REGION}"
+# Loop until the ILBs are fully gone
+until [[ "$(gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules list --format="value(name)" --filter "(description ~ istio-system.*ilb OR description:kube-system/dns-ilb) AND network ~ /istio-network$")" == "" ]]; do
+  # Find all internal (ILB) forwarding rules in the network: istio-network
+  FWDING_RULE_NAMES="$(gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules list --format="value(name)" --filter "(description ~ istio-system.*ilb OR description:kube-system/dns-ilb) AND network ~ /istio-network$")"
+  # Iterate and delete the forwarding rule by name and its corresponding backend-service by the same name
+  for FWD_RULE in ${FWDING_RULE_NAMES}; do
+    gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules delete "${FWD_RULE}" --region="${REGION}" || true
+    gcloud --project="${ISTIO_PROJECT}" compute backend-services delete "${FWD_RULE}" --region="${REGION}" || true
+  done
+  sleep 2
 done
-# Delete the leftover health check by name
-for HEALTH_CHECK in ${HEALTH_CHECKS}; do
-  gcloud --project="${ISTIO_PROJECT}" compute health-checks delete "${HEALTH_CHECK}"
+
+# Loop until the target-pools and health checks are fully gone
+until [[ "$(gcloud --project="${ISTIO_PROJECT}" compute target-pools list --format="value(name)" --filter="(instances ~ gke-${ISTIO_CLUSTER})")" == "" && "$(gcloud --project="${ISTIO_PROJECT}" compute target-pools list --format="value(healthChecks)" --filter="(instances ~ gke-${ISTIO_CLUSTER})" | sed 's/.*\/\(k8s\-.*$\)/\1/g')" == "" ]]; do
+  # Find all target pools with this cluster as the target by name
+  TARGET_POOLS="$(gcloud --project="${ISTIO_PROJECT}" compute target-pools list --format="value(name)" --filter="(instances ~ gke-${ISTIO_CLUSTER})")"
+  # Find all health checks with this cluster's nodes as the instances
+  HEALTH_CHECKS="$( gcloud --project="${ISTIO_PROJECT}" compute target-pools list --format="value(healthChecks)" --filter="(instances ~ gke-${ISTIO_CLUSTER})" | sed 's/.*\/\(k8s\-.*$\)/\1/g')"
+  # Delete the external (RLB) forwarding rules by name and the target pool by the same name
+  for TARGET_POOL in ${TARGET_POOLS}; do
+    gcloud --project="${ISTIO_PROJECT}" compute forwarding-rules delete "${TARGET_POOL}" --region="${REGION}" || true
+    gcloud --project="${ISTIO_PROJECT}" compute target-pools delete "${TARGET_POOL}" --region="${REGION}" || true
+  done
+  # Delete the leftover health check by name
+  for HEALTH_CHECK in ${HEALTH_CHECKS}; do
+    gcloud --project="${ISTIO_PROJECT}" compute health-checks delete "${HEALTH_CHECK}" || true
+  done
+  sleep 2
 done
 
 # Delete all the firewall rules that aren't named like our cluster name which
 # correspond to our health checks and load balancers that are dynamically created.
 # This is because GKE manages those named with the cluster name get cleaned
 # up with a terraform destroy.
-FW_RULES="$(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)"   --filter "targetTags.list():gke-${ISTIO_CLUSTER} AND NOT name ~ gke-${ISTIO_CLUSTER}")"
-for FW_RULE in ${FW_RULES}; do
-  gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete "${FW_RULE}"
+until [[ "$(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)"   --filter "targetTags.list():gke-${ISTIO_CLUSTER} AND NOT name ~ gke-${ISTIO_CLUSTER}")" == "" ]]; do
+  FW_RULES="$(gcloud --project="${ISTIO_PROJECT}" compute firewall-rules list --format "value(name)"   --filter "targetTags.list():gke-${ISTIO_CLUSTER} AND NOT name ~ gke-${ISTIO_CLUSTER}")"
+  for FW_RULE in ${FW_RULES}; do
+    gcloud --project="${ISTIO_PROJECT}" compute firewall-rules delete "${FW_RULE}"
+  done
+  sleep 2
 done
 
 # Tear down all of the infrastructure created by Terraform
