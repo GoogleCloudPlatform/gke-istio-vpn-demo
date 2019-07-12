@@ -15,11 +15,11 @@ limitations under the License.
 */
 
 provider "google-beta" {
-version = "~> v2.0.0"
-region = "${var.region}"
+  version = "~> v2.10.0"
+  region  = var.region
 }
 
 provider "google" {
-  version = "~> v1.17"
-  region  = "${var.region}"
+  version = "~> v2.10.0"
+  region  = var.region
 }

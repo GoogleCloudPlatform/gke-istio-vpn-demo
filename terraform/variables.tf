@@ -15,49 +15,65 @@ limitations under the License.
 */
 
 // The project used to deploy the GKE cluster
-variable "istio_project" {}
+variable "istio_project" {
+}
 
 // The project used to deploy the GCE instance
-variable "gce_project" {}
+variable "gce_project" {
+}
 
 // The name of the network to create for the GKE cluster
-variable "istio_network" {}
+variable "istio_network" {
+}
 
 // The name of the network to create for the GCE instance
-variable "gce_network" {}
+variable "gce_network" {
+}
 
 // The name to use for the GKE cluster
-variable "istio_cluster" {}
+variable "istio_cluster" {
+}
 
 // NOTE: The zone selected must reside in the selected region
 // The region in which to deploy all regionally-scoped resources
-variable "region" {}
+variable "region" {
+}
 
 // The zone in which to deploy all zonally-scoped resources
-variable "zone" {}
+variable "zone" {
+}
 
 // The subnet used to deploy the GKE cluster
-variable "istio_subnet" {}
+variable "istio_subnet" {
+}
 
 // The CIDR used by the GKE cluster's subnet
-variable "istio_subnet_cidr" {}
+variable "istio_subnet_cidr" {
+}
 
 // The alias IP CIDR used by the GKE cluster's pods
-variable "istio_subnet_cluster_cidr" {}
+variable "istio_subnet_cluster_cidr" {
+}
 
 // The alias IP CIDR used by the GKE cluster's services
-variable "istio_subnet_services_cidr" {}
+variable "istio_subnet_services_cidr" {
+}
 
 // The subnet used by the GCE instance
-variable "gce_subnet" {}
+variable "gce_subnet" {
+}
 
 // The CIDR used by the GCE instance's subnet
-variable "gce_subnet_cidr" {}
+variable "gce_subnet_cidr" {
+}
 
 // The name to use for the GCE instance
-variable "gce_vm" {}
+variable "gce_vm" {
+}
 
 // The gke version to use for the istio cluster.  This version must correspond
 // with the istio version in "Supported Cluster Versions":
 // https://cloud.google.com/istio/docs/istio-on-gke/installing
-variable "gke_version" {}
+variable "gke_version" {
+}
+
